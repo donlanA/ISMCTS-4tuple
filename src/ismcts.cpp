@@ -18,36 +18,35 @@ ISMCTS::ISMCTS(int simulations) : simulations(simulations)
     rng.seed(static_cast<unsigned int>(seed));
 }
 
+// 初始化
 void ISMCTS::reset()
 {
-    // 重新初始化隨機數生成器
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     rng.seed(static_cast<unsigned int>(seed));
 
-    // 清理搜尋樹
     Node::cleanup(root);
+    arrangement_stats.clear();
 }
 
-GST ISMCTS::getDeterminizedState(const GST &originalState)
+// 隨機化敵方棋子顏色 (只要棋子還活著就重新隨機化，但保留已知信息)
+GST ISMCTS::getDeterminizedState(const GST &originalState, int current_iteration) 
 {
-    // 創建原始狀態的副本
+    
     GST determinizedState = originalState;
-
-    // 隨機化敵方棋子顏色 (只要棋子還活著就重新隨機化，但保留已知信息)
-    randomizeUnrevealedPieces(determinizedState);
+    randomizeUnrevealedPieces(determinizedState, current_iteration);
 
     return determinizedState;
 }
 
-// 幫助方法：隨機化未揭露的敵方棋子
-void ISMCTS::randomizeUnrevealedPieces(GST &state)
+// 隨機化未揭露的敵方棋子
+void ISMCTS::randomizeUnrevealedPieces(GST &state, int current_iteration)
 {
     const bool *revealed = state.get_revealed(); // 獲取揭露狀態
     std::vector<int> unrevealed_pieces;
     int redCount = 0, blueCount = 0;
 
-    // 遍歷所有玩家一棋子
-    for (int i = 0; i < PIECES; i++)
+    // 收集未揭露棋子
+    for (int i = PIECES; i < PIECES * 2; i++)
     {
         if (revealed[i])
         {
@@ -58,28 +57,127 @@ void ISMCTS::randomizeUnrevealedPieces(GST &state)
         }
         else
         {
-            // 如果未揭露，將其添加到列表中
             unrevealed_pieces.push_back(i);
         }
     }
 
-    // 計算剩餘的紅藍棋子數量（總數 - 已知的）
-    int totalRed = 4;  // 每個玩家一開始有4個紅色棋子
-    int totalBlue = 4; // 每個玩家一開始有4個藍色棋子
+    // 計算剩餘的紅藍棋子數量
+    int totalRed = 4;
+    int totalBlue = 4;
     int redRemaining = totalRed - redCount;
     int blueRemaining = totalBlue - blueCount;
 
     // 隨機打亂未揭露棋子列表
-    std::shuffle(unrevealed_pieces.begin(), unrevealed_pieces.end(), rng);
+    // std::shuffle(unrevealed_pieces.begin(), unrevealed_pieces.end(), rng);
 
     // 根據剩餘比例分配顏色
+    // for (size_t i = 0; i < unrevealed_pieces.size(); i++)
+    // {
+    //     int piece = unrevealed_pieces[i];
+    //     if (i < redRemaining)
+    //         state.set_color(piece, RED);
+    //     else
+    //         state.set_color(piece, BLUE);
+    // }
+
+    bool use_stats = (current_iteration >= simulations / 2);
+
+    if (!use_stats)
+    {
+        // 前半模擬顏色分配：純隨機確定化 + 紀錄排列字串（在 simulation() 結束後更新）
+        std::shuffle(unrevealed_pieces.begin(), unrevealed_pieces.end(), rng);
+        for (size_t i = 0; i < unrevealed_pieces.size(); i++)
+        {
+            int piece = unrevealed_pieces[i];
+            if (i < redRemaining)
+                state.set_color(piece, -RED);
+            else
+                state.set_color(piece, -BLUE);
+        }
+        return;
+    }
+
+    // 後半模擬顏色分配：用 arrangement_stats 來推測
+    // 生成所有合法排列
+    std::vector<std::vector<int>> arrangements;
+    int total_pieces = redRemaining + blueRemaining;
+    int total_combinations = 1 << total_pieces;
+
+    for (int mask = 0; mask < total_combinations; mask++)
+    {
+        std::vector<int> arrangement;
+        int red = 0, blue = 0;
+        for (int i = 0; i < total_pieces; i++)
+        {
+            if (mask & (1 << i))
+            {
+                arrangement.push_back(-RED);
+                red++;
+            }
+            else
+            {
+                arrangement.push_back(-BLUE);
+                blue++;
+            }
+        }
+        if (red == redRemaining && blue == blueRemaining)
+        {
+            arrangements.push_back(arrangement);
+        }
+    }
+
+    // 計算每個排列的推測勝率
+    std::vector<double> win_rates;
+    for (const auto &arrangement : arrangements)
+    {
+        std::string key;
+        for (auto color : arrangement) key += (color == -RED) ? 'R' : 'B';
+        
+
+        auto it = arrangement_stats.find(key);
+        if (it == arrangement_stats.end() || it->second.second == 0)
+        {
+            win_rates.push_back(0.5);
+        }
+        else
+        {
+            double win_rate = static_cast<double>(it->second.first) / it->second.second;
+            win_rates.push_back(win_rate);
+        }
+    }
+
+    // 根據反勝率加權
+    std::vector<double> weights;
+    double total_weight = 0.0;
+    for (double rate : win_rates)
+    {
+        double weight = 1.0 - rate + 0.05;
+        weights.push_back(weight);
+        total_weight += weight;
+    }
+
+    for (auto &w : weights) w /= total_weight;
+    
+
+    // 加權隨機選排列
+    std::uniform_real_distribution<> dist(0.0, 1.0);
+    double r = dist(rng);
+    double cumulative = 0.0;
+    int selected_idx = 0;
+    for (size_t i = 0; i < weights.size(); i++)
+    {
+        cumulative += weights[i];
+        if (r <= cumulative)
+        {
+            selected_idx = i;
+            break;
+        }
+    }
+
+    const auto &selected_arrangement = arrangements[selected_idx];
     for (size_t i = 0; i < unrevealed_pieces.size(); i++)
     {
-        int piece = unrevealed_pieces[i];
-        if (i < redRemaining)
-            state.set_color(piece, RED);
-        else
-            state.set_color(piece, BLUE);
+        state.set_color(unrevealed_pieces[i], selected_arrangement[i]);
     }
 }
 
@@ -107,13 +205,9 @@ void ISMCTS::selection(Node *&node)
         }
 
         if (bestChild)
-        {
             node = bestChild;
-        }
         else
-        {
             break;
-        }
     }
 }
 
@@ -208,10 +302,8 @@ void ISMCTS::backpropagation(Node *node, double result)
 
 double ISMCTS::calculateUCB(const Node *node) const
 {
-    if (node->visits == 0)
-    {
-        return std::numeric_limits<double>::infinity();
-    }
+    if (node->visits == 0) return std::numeric_limits<double>::infinity();
+    
 
     double winRate = static_cast<double>(node->wins) / node->visits;
 
@@ -248,15 +340,12 @@ void ISMCTS::printNodeStats(const Node *node, int indent) const
         std::cout << indentation << "Root Node - Wins/Visits: " << node->wins << "/" << node->visits << std::endl;
     }
 
-    // Print child nodes with significant visits
     if (node->visits >= 10)
     {
         for (const auto &child : node->children)
         {
-            if (child->visits > 0)
-            {
-                printNodeStats(child.get(), indent + 1);
-            }
+            if (child->visits > 0) printNodeStats(child.get(), indent + 1);
+            
         }
     }
 }
@@ -274,11 +363,12 @@ int ISMCTS::findBestMove(GST &game)
 
     // 創建新的根節點 (改用 new 而不是 make_unique)
     root.reset(new Node(game));
+    arrangement_stats.clear();
 
     for (int i = 0; i < simulations; i++)
     {
         Node *currentNode = root.get();
-        GST determinizedState = getDeterminizedState(game);
+        GST determinizedState = getDeterminizedState(game, i);
 
         // 選擇階段
         selection(currentNode);

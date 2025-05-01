@@ -21,8 +21,9 @@ private:
     double simulation(GST& state);
     void backpropagation(Node* node, double result);
     double calculateUCB(const Node* node) const;
-    GST getDeterminizedState(const GST& originalState);
-    void randomizeUnrevealedPieces(GST& state);
+    GST getDeterminizedState(const GST& originalState, int current_iteration);
+    void randomizeUnrevealedPieces(GST& state, int current_iteration);
+    std::unordered_map<std::string, std::pair<int, int>> arrangement_stats;
 
 
     // 模擬移動相關的常量

@@ -1,4 +1,4 @@
-#include "header.h"
+#include "4T_header.h"
 
 void DATA::init_data(){
     for(int i = 0; i < TUPLE_NUM * FEATURE_NUM; i++){
@@ -236,9 +236,9 @@ void DATA::write_data_file(){          //open file & write file
 }
 
 void DATA::write_data_file_run(int run){          //open file & write file
-    if (mkdir("data", 0777) != 0) {
-        // new file
-    }
+    // if (mkdir("data", 0777) != 0) {
+    //     // new file
+    // }
 
     std::ofstream Edata, Udata;
 
@@ -269,9 +269,9 @@ void DATA::write_data_file_run(int run){          //open file & write file
 }
 
 void DATA::write_data_file_run_R1(int run){          //open file & write file
-    if (mkdir("data R1", 0777) != 0) {
-        // new file
-    }
+    // if (mkdir("data R1", 0777) != 0) {
+    //     // new file
+    // }
 
     std::ofstream Edata, Udata;
 
@@ -302,9 +302,9 @@ void DATA::write_data_file_run_R1(int run){          //open file & write file
 }
 
 void DATA::write_data_file_run_B1(int run){          //open file & write file
-    if (mkdir("data B1", 0777) != 0) {
-        // new file
-    }
+    // if (mkdir("data B1", 0777) != 0) {
+    //     // new file
+    // }
 
     std::ofstream Edata, Udata;
 

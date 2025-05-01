@@ -13,12 +13,14 @@
 #define USER 0
 #define ENEMY 1
 
+class DATA;
+
 // 共用參數
 constexpr double EXPLORATION_PARAM = 1.414;
 
 // 前向聲明
 class ISMCTS;
-class MCTS;  // 添加 MCTS 前向聲明
+class MCTS;
 
 class GST {
     friend class ISMCTS; 

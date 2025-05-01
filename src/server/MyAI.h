@@ -1,7 +1,7 @@
 #ifndef MYAI_INCLUDED
 #define MYAI_INCLUDED 
 
-#include "../header.h"
+#include "../4T_header.h"
 #include <math.h>
 
 using std::stoi;

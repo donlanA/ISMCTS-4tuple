@@ -27,7 +27,7 @@ W: west
 S: south
 
 ## Compile
-g++ -o Tomorin main.cpp MyAI.cpp ../GST_impl.cpp ../DATA_impl.cpp -std=c++11
+g++ -o Tomorin main.cpp MyAI.cpp ../4T_GST_impl.cpp ../4T_DATA_impl.cpp -std=c++11
 
 ## Code settings
 ### pieces:

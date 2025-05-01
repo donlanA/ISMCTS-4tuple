@@ -29,6 +29,8 @@ S: south
 ## Compile
 g++ -o Tomorin main.cpp MyAI.cpp ../4T_GST_impl.cpp ../4T_DATA_impl.cpp -std=c++11
 
+
+g++ -o Tomorin_ismcts main.cpp MyAI.cpp  ../4T_GST_impl.cpp ../4T_DATA_impl.cpp ../node.cpp ../ismcts.cpp -std=c++11
 ## Code settings
 ### pieces:
  0   h   g   f   e   0

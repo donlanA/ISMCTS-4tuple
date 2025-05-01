@@ -17,9 +17,18 @@ static const int offset_2x2[4] = {0, 1, 6, 7};
 static const int offset_4x1[4] = {0, 6, 12, 18};
 
 void SetColor(int color = 7){
+#ifdef _WIN32
     HANDLE hConsole;
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole,color);
+#else
+    // For non-Windows platforms, use ANSI escape codes
+    switch(color) {
+        case 4: printf("\033[31m"); break;  // RED
+        case 9: printf("\033[34m"); break;  // BLUE
+        default: printf("\033[0m"); break;  // Reset to default
+    }
+#endif
 }
 
 void GST::set_board(char* position){        //for server

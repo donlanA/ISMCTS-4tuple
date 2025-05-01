@@ -30,9 +30,18 @@
 #include <chrono>
 #include <random>
 #include <time.h>
-#include <direct.h>
+#ifdef _WIN32
+    #include <direct.h>  // Windows directory handling
+#else
+    #include <sys/stat.h>  // POSIX directory handling (for Mac/Linux)
+#endif
 #include <algorithm>
-#include <windows.h>
+#ifdef _WIN32
+    #include <windows.h>
+#elif defined(__APPLE__)
+    #include <mach/mach_time.h>  // For timing functions
+    // Add other macOS-specific headers as needed
+#endif
 
 #include "pcg_random.hpp"
 #include "4T_DATA.hpp"

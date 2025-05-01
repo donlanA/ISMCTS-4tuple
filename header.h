@@ -30,10 +30,21 @@
 #include <chrono>
 #include <random>
 #include <time.h>
-#include <direct.h>
 #include <algorithm>
-#include <windows.h>
+
+// windows 跟 mac 的header檔
+#ifdef _WIN32
+    #include <direct.h>  
+    #include <windows.h>
+#elif defined(__APPLE__)
+    #include <sys/stat.h> 
+    #include <mach/mach_time.h>
+#endif
+
 
 #include "pcg_random.hpp"
 #include "DATA.hpp"
 #include "GST.hpp"
+
+#include "node.hpp"
+#include "ismcts.hpp"

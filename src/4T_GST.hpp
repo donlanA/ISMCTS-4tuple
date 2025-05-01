@@ -2,7 +2,7 @@
 #define GST_HPP
 
 #include "4T_header.h"
-
+constexpr double EXPLORATION_PARAM = 1.414;
 class DATA;
 
 class GST {
@@ -21,7 +21,7 @@ class GST {
     // orig ver
     // int color_his_E[201][36];
     // int color_his_U[201][36];
-
+    bool revealed[PIECES * 2] = {false}; // revealed pieces
     // R1 ver
     int color_his_E[201][37];
     int color_his_U[201][37];
@@ -69,6 +69,13 @@ public:
 
     // server
     void set_board(char* position);
+
+    //ismcts
+    bool is_revealed(int piece) const { return revealed[piece]; }
+    int get_color(int piece) const { return color[piece]; }
+    int get_pos(int piece) const { return pos[piece]; }
+    void set_color(int piece, int new_color) { color[piece] = new_color; }
+    const bool* get_revealed() const { return revealed; }
 };
 
 #endif

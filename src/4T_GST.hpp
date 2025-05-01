@@ -26,7 +26,7 @@ class GST {
     int color_his_E[201][37];
     int color_his_U[201][37];
 
-    long long game_his[201][2];       //棋譜
+    // long long game_his[201][2];       //棋譜
     int step;
 
 public:
@@ -38,42 +38,34 @@ public:
     void undo();
     bool is_over();
 
-    int get_piece(int index){ return piece_nums[index]; }
+    // int get_piece(int index){ return piece_nums[index]; }
 
     bool is_valid_pattern(int base_pos, const int* offset);
     int get_loc(int base_pos, const int* offset);
     int get_feature(int base_pos, const int* offset, int step_idx, int who);
     int get_feature_unknown(int base_pos, const int* offset);
-    int get_base_pos(int pos, int offset_idx, const int* offset){
-        return pos - offset[offset_idx];
-    }
+    // int get_base_pos(int pos, int offset_idx, const int* offset){ return pos - offset[offset_idx]; }
     float get_weight(int base_pos, const int* offset, DATA&);
     float compute_board_weight(DATA&);
     int highest_weight(DATA&);
 
-    int get_winner(){
-        return this->winner;
-    }
-    int get_nplies(){
-        return this->n_plies;
-    }
-    int get_nowTurn(){
-        return this->nowTurn;
-    }
+    int get_winner(){ return this->winner; }
+    int get_nplies(){ return this->n_plies; }
+    // int get_nowTurn(){ return this->nowTurn; }
 
-    void record_board();
+    // void record_board();
     void update_tuple_trans(int step, int base_pos, const int* offset, int now_win, int U, int E, DATA&, int piece_step[4]);    // piece_step 0:U red、1:U blue、2:E red、3:E blue
-    void update_tuple(int now_win, DATA&);
-    void show_color_his(int WHO);
-    void show_game_his();
-    int get_step(){ return step; }
-    void write_history_file(int run);
+    // void update_tuple(int now_win, DATA&);
+    // void show_color_his(int WHO);
+    // void show_game_his();
+    // int get_step(){ return step; }
+    // void write_history_file(int run);
 
-    int get_dst(int idx){ return pos[idx]; }
-    int get_piece_board(int idx) { return piece_board[idx]; }
+    // int get_dst(int idx){ return pos[idx]; }
+    // int get_piece_board(int idx) { return piece_board[idx]; }
     
     // flat_mc
-    void guess_board(int player);
+    // void guess_board(int player);
 
     // server
     void set_board(char* position);

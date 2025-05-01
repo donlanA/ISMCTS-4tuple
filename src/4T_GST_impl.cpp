@@ -17,19 +17,31 @@ static const int offset_2x2[4] = {0, 1, 6, 7};
 static const int offset_4x1[4] = {0, 6, 12, 18};
 
 void SetColor(int color = 7){
+#ifdef _WIN32
     HANDLE hConsole;
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole,color);
+#else
+    // For non-Windows platforms, use ANSI escape codes
+    switch(color) {
+        case 4: printf("\033[31m"); break;  // RED
+        case 9: printf("\033[34m"); break;  // BLUE
+        default: printf("\033[0m"); break;  // Reset to default
+    }
+#endif
 }
 
 void GST::set_board(char* position){        //for server
     memset(board, 0, sizeof(board));
     memset(pos, 0, sizeof(pos));
+    memset(revealed, false, sizeof(revealed));
     for(int i = 0; i < ROW * COL; i++) piece_board[i] = -1;
     for(int i = 0; i < 4; i++) piece_nums[i] = 4;
     nowTurn = USER;
     winner = -1;
-
+    for(int i=0; i<PIECES; i++) {//預設自己的都可看到
+        revealed[i] = true;
+    }
     // Server傳過來的訊息格式：MOV?10B24B34B99b15R25R35R99r45u31u21u99r40u30u20u99b
     for(int i = 0; i < PIECES * 2; i++){
         int index = i * 3;
@@ -265,6 +277,7 @@ void GST::do_move(int move){    //move chess
     if(board[dst] < 0){     //Enemy's color
         pos[piece_board[dst]] = -1;     //chess is eaten
         move |= piece_board[dst] << 8;
+        revealed[piece_board[dst]] = true;
         if(color[piece_board[dst]] == -RED) piece_nums[2] -= 1; //check the remain color of red & blue chess
         else if(color[piece_board[dst]] == -BLUE) piece_nums[3] -= 1;
         else if(color[piece_board[dst]] == -UNKNOWN){}  //先什麼都不做
@@ -276,6 +289,7 @@ void GST::do_move(int move){    //move chess
     else if(board[dst] > 0){    //User's color
         pos[piece_board[dst]] = -1;
         move |= piece_board[dst] << 8;
+        revealed[piece_board[dst]] = true;
         if(color[piece_board[dst]] == RED) piece_nums[0] -= 1;
         else if(color[piece_board[dst]] == BLUE) piece_nums[1] -= 1;
         else if(color[piece_board[dst]] == UNKNOWN){}  //先什麼都不做

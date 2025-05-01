@@ -1,5 +1,4 @@
 #include "node.hpp"
-
 // Node implementation
 Node::Node(GST state, int move) : 
     state(state), 

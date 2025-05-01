@@ -1,3 +1,21 @@
+### 目標
+
+合併ISMCTS 4tuple
+
+讓 ISMCTS 在模擬時不要完全隨機走步，而是根據 4tuple 選擇，以提升模擬成效
+
+### 合併思路
+
+1. 確認 gst 程式可以讓 4tuple 正常運作 (可以連接 server)
+
+2. 修改 ISMCTS.cpp 當中 simulation 的部分，讓 ISMCTS 考慮 4tuple
+
+3. 修改 gst-endgame，測試是否能在殘局有更好的表現 (gst-endgame 與 gst 只差在 init_board 的部分)
+
+### 進度
+
+gst、gst-endgame目前都是讓mcts與ismcts對打，需要修改成連接server
+
 ## Playing
 ### move direction:
 N: north
@@ -5,23 +23,18 @@ E: east
 W: west
 S: south
 
-## Compile
+## Compile (gst)
 g++ -std=c++11 -O2 src/gst.cpp src/ismcts.cpp src/mcts.cpp src/node.cpp -o game
-
 ./game
 
-## Endgame Mode
-To compile and play from a specific board position:
-
-```
+## Endgame Compile (gst-endgame)
 g++ -std=c++11 -O2 src/gst-endgame.cpp src/ismcts.cpp src/mcts.cpp src/node.cpp -o endgame
 ./endgame
-```
 
-Choose option 2 to load a custom board position.
-Input the positions of pieces according to the prompts.
 
 ## Code settings
+
+
 ### pieces:
  0   h   g   f   e   0
  0   d   c   b   a   0
@@ -77,5 +90,3 @@ color board: |1|:red |2|:blue
  -   -   -   -   -   -
  -   A   B   C   D   -
  -   E   F   G   H   -
-
- 有動 ismcts.cpp ismcts.hpp gst-endgame.cpp

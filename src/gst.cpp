@@ -7,7 +7,7 @@
 #include <iostream>
 #include "gst.hpp"
 #include "ismcts.hpp"
-#include "mcts.hpp" // 添加 MCTS 头文件
+#include "mcts.hpp" 
 
 #include <time.h>
 #include <random>

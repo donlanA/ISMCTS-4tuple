@@ -77,13 +77,9 @@ void ISMCTS::randomizeUnrevealedPieces(GST &state)
     {
         int piece = unrevealed_pieces[i];
         if (i < redRemaining)
-        {
             state.set_color(piece, RED);
-        }
         else
-        {
             state.set_color(piece, BLUE);
-        }
     }
 }
 
@@ -154,7 +150,7 @@ double ISMCTS::simulation(GST &state)
     GST simState = state; // 複製狀態，不修改原始數據
 
     std::uniform_int_distribution<> dist(0, INT_MAX);
-    std::vector<int> simulationMoves; // 記錄走步
+    // std::vector<int> simulationMoves; // 記錄走步
 
     int maxMoves = 1000;
     int moveCounter = 0;
@@ -162,12 +158,11 @@ double ISMCTS::simulation(GST &state)
     while (!simState.is_over() && moveCounter < maxMoves)
     {
         moveCount = simState.gen_all_move(moves);
-        if (moveCount == 0)
-            break;
+        if (moveCount == 0) break;
 
         int randomIndex = dist(rng) % moveCount;
         int move = moves[randomIndex];
-        simulationMoves.push_back(move);  // 記錄這一步
+        // simulationMoves.push_back(move); 
         simState.do_move(move);
         moveCounter++;
     }
@@ -197,10 +192,9 @@ double ISMCTS::simulation(GST &state)
 
     //     system("pause");
     // }
-    
+
     return winner;
 }
-
 
 void ISMCTS::backpropagation(Node *node, double result)
 {
@@ -235,7 +229,6 @@ void ISMCTS::printNodeStats(const Node *node, int indent) const
     int piece = node->move >> 4;
     int direction = node->move & 0xf;
     const char *dirNames[] = {"S", "E", "W", "N"};
-    
 
     if (node->move != -1)
     {

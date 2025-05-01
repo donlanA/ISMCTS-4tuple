@@ -1,8 +1,6 @@
 #ifndef GST_HPP
 #define GST_HPP
 
-#include "header.h"
-
 #define ROW 6
 #define COL 6
 #define PIECES 8
@@ -23,9 +21,9 @@ class ISMCTS;
 class MCTS;  // 添加 MCTS 前向聲明
 
 class GST {
-    friend class ISMCTS; // 將ISMCTS類設為可以訪問所有私有成員
-    friend class MCTS;   // 添加 MCTS 為友元類
-    friend int main();   // Make main function a friend to access board members
+    friend class ISMCTS; 
+    friend class MCTS;   
+    friend int main();   
 
 private:
     int board[ROW * COL];        // 記錄棋子顏色

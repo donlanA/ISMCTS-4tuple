@@ -28,65 +28,65 @@ static const int init_pos[2][PIECES] = {{25,26,27,28,31,32,33,34}, {10,9,8,7,4,3
 static const int dir_val[4] = {-COL, -1, 1, COL};
 
 void GST::set_board(char* position){        //for server
-    memset(board, 0, sizeof(board));
-    memset(pos, 0, sizeof(pos));
-    for(int i = 0; i < ROW * COL; i++) piece_board[i] = -1;
-    for(int i = 0; i < 4; i++) piece_nums[i] = 4;
-    nowTurn = USER;
-    winner = -1;
+    // memset(board, 0, sizeof(board));
+    // memset(pos, 0, sizeof(pos));
+    // for(int i = 0; i < ROW * COL; i++) piece_board[i] = -1;
+    // for(int i = 0; i < 4; i++) piece_nums[i] = 4;
+    // nowTurn = USER;
+    // winner = -1;
 
-    // Server傳過來的訊息格式：MOV?10B24B34B99b15R25R35R99r45u31u21u99r40u30u20u99b
-    for(int i = 0; i < PIECES * 2; i++){
-        int index = i * 3;
-        char x = position[index];
-        char y = position[index + 1];
-        char c = position[index + 2];
+    // // Server傳過來的訊息格式：MOV?10B24B34B99b15R25R35R99r45u31u21u99r40u30u20u99b
+    // for(int i = 0; i < PIECES * 2; i++){
+    //     int index = i * 3;
+    //     char x = position[index];
+    //     char y = position[index + 1];
+    //     char c = position[index + 2];
 
-        if(x == '9' && y == '9'){
-            pos[i] = -1;    //被吃掉
+    //     if(x == '9' && y == '9'){
+    //         pos[i] = -1;    //被吃掉
 
-            if(i < PIECES){
-                if(c == 'r'){
-                    color[i] = RED;
-                    piece_nums[0]--;
-                }
-                else if(c == 'b'){
-                    color[i] = BLUE;
-                    piece_nums[1]--;
-                }
-            }
-            else{
-                if(c == 'r'){
-                    color[i] = -RED;
-                    piece_nums[2]--;
-                }
-                else if(c == 'b'){
-                    color[i] = -BLUE;
-                    piece_nums[3]--;
-                }
-            }
-        }
-        else{
-            int pos_val = (x - '0') + (y - '0') * COL;
-            pos[i] = pos_val;
+    //         if(i < PIECES){
+    //             if(c == 'r'){
+    //                 color[i] = RED;
+    //                 piece_nums[0]--;
+    //             }
+    //             else if(c == 'b'){
+    //                 color[i] = BLUE;
+    //                 piece_nums[1]--;
+    //             }
+    //         }
+    //         else{
+    //             if(c == 'r'){
+    //                 color[i] = -RED;
+    //                 piece_nums[2]--;
+    //             }
+    //             else if(c == 'b'){
+    //                 color[i] = -BLUE;
+    //                 piece_nums[3]--;
+    //             }
+    //         }
+    //     }
+    //     else{
+    //         int pos_val = (x - '0') + (y - '0') * COL;
+    //         pos[i] = pos_val;
             
-            if(i < PIECES) {     //User
-                if(c == 'R') color[i] = RED;
-                else if(c == 'B') color[i] = BLUE;
-            }
-            else{       //Enemy
-                if(c == 'u') color[i] = -UNKNOWN;      //未知的棋
-            }
+    //         if(i < PIECES) {     //User
+    //             if(c == 'R') color[i] = RED;
+    //             else if(c == 'B') color[i] = BLUE;
+    //         }
+    //         else{       //Enemy
+    //             if(c == 'u') color[i] = -UNKNOWN;      //未知的棋
+    //         }
             
-            // 更新棋盤
-            board[pos_val] = color[i];     // 記錄顏色
-            piece_board[pos_val] = i;      // 記錄棋子編號
-        }
-    }
+    //         // 更新棋盤
+    //         board[pos_val] = color[i];     // 記錄顏色
+    //         piece_board[pos_val] = i;      // 記錄棋子編號
+    //     }
+    // }
 
-    print_board();
+    // print_board();
 
-    return;
+    // return;
 }
 
 

@@ -87,3 +87,6 @@ color board: |1|:red |2|:blue
  -   -   -   -   -   -
  -   A   B   C   D   -
  <   E   F   G   H   >
+
+處理重複定義include或是依賴問題
+不確定要不要加複製建構子

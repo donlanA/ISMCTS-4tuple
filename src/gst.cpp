@@ -8,6 +8,7 @@
 #include "gst.hpp"
 #include "ismcts.hpp"
 #include "mcts.hpp" 
+#include "4T_DATA.hpp"
 
 #include <time.h>
 #include <random>
@@ -26,6 +27,8 @@ static std::map<int, char> print_piece = {
 };
 static const int init_pos[2][PIECES] = {{25,26,27,28,31,32,33,34}, {10,9,8,7,4,3,2,1}};
 static const int dir_val[4] = {-COL, -1, 1, COL};
+
+DATA data;
 
 void GST::set_board(char* position){        //for server
     // memset(board, 0, sizeof(board));
@@ -415,7 +418,7 @@ int flat_mc(GST& game, int simu_times){
 // 使用ismcts替代flat_mc函數
 int ismcts_move(GST& game, int simu_times) {
     ISMCTS ismcts(simu_times);
-    return ismcts.findBestMove(game);
+    return ismcts.findBestMove(game, data);
 }
 
 // 新增統計結構
@@ -511,7 +514,7 @@ int main() {
                 game.do_move(move);
             } else {
                 if(num_games == 1) std::cout << "Player 2 (ISMCTS) 思考中...\n";
-                int move = ismcts.findBestMove(game);
+                int move = ismcts.findBestMove(game, data);
                 if (move == -1) break;
                 game.do_move(move);
             }

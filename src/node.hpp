@@ -1,6 +1,7 @@
 #ifndef NODE_HPP
 #define NODE_HPP
-#include "4T_GST.hpp"
+// #include "4T_GST.hpp"
+#include "gst.hpp"
 #include <vector>
 #include <memory>
 

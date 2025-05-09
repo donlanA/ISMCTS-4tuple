@@ -84,7 +84,8 @@ void GST::set_board(char* position){        //for server
     return;
 }
 
-void GST::init_board(){ //initialize data
+//initialize data
+void GST::init_board(){
     auto now = std::chrono::system_clock::now();
     auto now_as_duration = now.time_since_epoch();
     auto now_as_microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now_as_duration).count();
@@ -98,6 +99,7 @@ void GST::init_board(){ //initialize data
 
     memset(board, 0, sizeof(board));
     memset(pos, 0, sizeof(pos));
+    memset(revealed, false, sizeof(revealed));
     for(int i=0; i<ROW*COL; i++) piece_board[i] = -1;
     for(int i=0; i<4; i++) piece_nums[i] = 4;
     for(int i=0; i<PIECES; i++) {   //set color
@@ -138,6 +140,15 @@ void GST::init_board(){ //initialize data
     for(int i=0; i<4; i++){
         color[piece_index[red[i]]] = RED;
         color[piece_index[red2[i]]] = -RED;
+
+        if (piece_index[red2[i]] >= PIECES) {
+            revealed[piece_index[red2[i]]] = true;
+        }
+    }
+    for(int i=PIECES; i<PIECES*2; i++) {
+        if(color[i] == -BLUE) {
+            revealed[i] = true;
+        }
     }
 
     //set all pieces position and board
@@ -192,7 +203,7 @@ void GST::print_board(){    //print the board now & print User's remain chess & 
     //     printf("%d ", board[i]);
     //     if(i % 6 == 5) printf("\n");
     // }
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');     //???enter???繼�??
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 int GST::gen_move(int* move_arr, int piece, int location, int& count){  //generate the possible step
@@ -265,6 +276,7 @@ void GST::do_move(int move){    //move chess
     if(board[dst] < 0){     //Enemy's color
         pos[piece_board[dst]] = -1;     //chess is eaten
         move |= piece_board[dst] << 8;
+        revealed[piece_board[dst]] = true;
         if(color[piece_board[dst]] == -RED) piece_nums[2] -= 1; //check the remain color of red & blue chess
         else if(color[piece_board[dst]] == -BLUE) piece_nums[3] -= 1;
         else if(color[piece_board[dst]] == -UNKNOWN){}  //先什麼都不做
@@ -288,11 +300,11 @@ void GST::do_move(int move){    //move chess
         move |= 0x1000;
     }
 
-    board[pos[piece]] = 0;  //set 0 at the location which stay before => space: color = 0
+    board[pos[piece]] = 0;          //set 0 at the location which stay before => space: color = 0
     piece_board[pos[piece]] = -1;   //set 0 at the location which stay before => space: no chess
-    board[dst] = color[piece];  //color the chess color at the location after move
-    piece_board[dst] = piece;   //set chess number at the location after move
-    pos[piece] = dst;   //the location of chess now
+    board[dst] = color[piece];      //color the chess color at the location after move
+    piece_board[dst] = piece;       //set chess number at the location after move
+    pos[piece] = dst;               //the location of chess now
     history[n_plies++] = move;
     nowTurn ^= 1; //change player
 }
@@ -350,6 +362,10 @@ void GST::undo(){   //return to last move(use to return status of random move)
 }
 
 bool GST::is_over(){    //game end or not => the number of remain chess color
+    // if(n_plies >= 200) {
+    //     winner = -2; // -2表示平局
+    //     return true;
+    // }
     if(winner != -1) return true;
     else{
         if(piece_nums[0] == 0 || piece_nums[3] == 0){
@@ -437,6 +453,7 @@ bool GST::is_over(){    //game end or not => the number of remain chess color
 //         printf("%lld %lld\n", game_his[i][USER], game_his[i][ENEMY]);
 //     }
 // }
+
 
 // Helper function to check if a pattern is valid given base position
 bool GST::is_valid_pattern(int base_pos, const int* offset){

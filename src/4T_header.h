@@ -33,6 +33,8 @@
 #include <direct.h>
 #include <algorithm>
 #include <windows.h>
+#include <unistd.h>
+#include <iomanip>
 
 #include "pcg_random.hpp"
 #include "4T_DATA.hpp"

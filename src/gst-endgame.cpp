@@ -83,13 +83,12 @@ void GST::init_board(){
         color[piece_index[red[i]]] = RED;
         color[piece_index[red2[i]]] = -RED;
         
-        // 修改這部分，設置玩家二的所有棋子為已揭露
-        if (piece_index[red2[i]] >= PIECES) {  // 玩家二的紅色棋子
+        if (piece_index[red2[i]] >= PIECES) {
             revealed[piece_index[red2[i]]] = true;
         }
     }
     for(int i=PIECES; i<PIECES*2; i++) {
-        if(color[i] == -BLUE) {  // 玩家二的藍色棋子
+        if(color[i] == -BLUE) {
             revealed[i] = true;
         }
     }
@@ -176,19 +175,16 @@ void GST::print_board(){
     printf("\n");
 }
 
-int GST::gen_move(int* move_arr, int piece, int location, int& count){
+int GST::gen_move(int* move_arr, int piece, int location, int& count){  //generate the possible step
     int row = location / ROW;
     int col = location % COL;
     
     if(nowTurn == USER){
-        if(row != 0 && board[location-6] <= 0) move_arr[count++] = piece << 4;            // 上
-        if(row != ROW-1 && board[location+6] <= 0) move_arr[count++] = piece << 4 | 3;    // 下
-        if(col != 0 && board[location-1] <= 0) move_arr[count++] = piece << 4 | 1;        // 左
-        if(col != COL-1 && board[location+1] <= 0) move_arr[count++] = piece << 4 | 2;    // 右
-        
-        // 只檢查玩家棋子的藍色即可逃脫，不需要revealed條件
-        bool canExit = (piece < PIECES && color[piece] == BLUE);
-        if(canExit){                                                         // 出口移動    
+        if(row != 0 && board[location-6] <= 0) move_arr[count++] = piece << 4;            //up
+        if(row != ROW-1 && board[location+6] <= 0) move_arr[count++] = piece << 4 | 3;    //down
+        if(col != 0 && board[location-1] <= 0) move_arr[count++] = piece << 4 | 1;        //left
+        if(col != COL-1 && board[location+1] <= 0) move_arr[count++] = piece << 4 | 2;    //right
+        if(color[piece] == BLUE){                                                         //exit move  
             if(location == 0) move_arr[count++] = piece << 4 | 1;
             if(location == 5) move_arr[count++] = piece << 4 | 2;
         }
@@ -197,43 +193,39 @@ int GST::gen_move(int* move_arr, int piece, int location, int& count){
         if(row != ROW-1 && board[location+6] >= 0) move_arr[count++] = piece << 4 | 3;    
         if(col != 0 && board[location-1] >= 0) move_arr[count++] = piece << 4 | 1;        
         if(col != COL-1 && board[location+1] >= 0) move_arr[count++] = piece << 4 | 2;
-        
-        // AI的藍色棋子也應該能夠逃脫，不需要revealed條件
-        bool canExit = (piece >= PIECES && color[piece] == -BLUE);
-        if(canExit){
+        if(color[piece] == -BLUE){
             if(location == 30) move_arr[count++] = piece << 4 | 1;
             if(location == 35) move_arr[count++] = piece << 4 | 2;
         }
     }
-    
-    return count;
+    return count;   //the number of possible step
 }
 
-int GST::gen_all_move(int* move_arr){
+int GST::gen_all_move(int* move_arr){   //gernerate all posibility of chess step
     int count = 0;
     int offset = nowTurn == ENEMY ? PIECES : 0;
     int* nowTurn_pos = pos + offset;
+
     for(int i=0; i<PIECES; i++){
         if(pos[i+offset] != -1){
             gen_move(move_arr, i+offset, nowTurn_pos[i], count);
         }
     }
+
     return count;
 }
 
-bool check_win_move(int location, int dir){
+bool check_win_move(int location, int dir){     //if chess is in corner, check next move will win or not
     if(location == 0 || location == 30) return dir == 1 ? true : false;
     else if(location == 5 || location == 35) return dir == 2 ? true : false;
     return false;
 }
 
-void GST::do_move(int move){
+void GST::do_move(int move){    //move chess
     int piece = move >> 4;
     int direction = move & 0xf;
 
-    // 只檢查是否是藍色棋子的勝利移動（逃脫），不考慮revealed
-    if((piece < PIECES && color[piece] == BLUE) || 
-       (piece >= PIECES && color[piece] == -BLUE)){
+    if(abs(color[piece]) == BLUE){
         if(check_win_move(pos[piece], direction)){
             winner = nowTurn;
             n_plies++;
@@ -243,36 +235,33 @@ void GST::do_move(int move){
         }
     }
     if (n_plies == MAX_PLIES) {
-        fprintf(stderr, "無法進行更多移動\n");
+        fprintf(stderr, "cannot do anymore moves\n");
         exit(1);
     }
 
     int dst = pos[piece] + dir_val[direction];
+    //dst: the chess's location after move / pos: the location of chess / dir_val: up down left right
     
-    if(board[dst] < 0){ // 捕獲敵方棋子
-        int captured_piece = piece_board[dst];
-        pos[captured_piece] = -1;
-        move |= captured_piece << 8;
-
-        
-        if(color[captured_piece] == -RED) piece_nums[2] -= 1;
-        else if(color[captured_piece] == -BLUE) piece_nums[3] -= 1;
+    if(board[dst] < 0){     //Enemy's color
+        pos[piece_board[dst]] = -1;     //chess is eaten
+        move |= piece_board[dst] << 8;
+        revealed[piece_board[dst]] = true;
+        if(color[piece_board[dst]] == -RED) piece_nums[2] -= 1; //check the remain color of red & blue chess
+        else if(color[piece_board[dst]] == -BLUE) piece_nums[3] -= 1;
+        else if(color[piece_board[dst]] == -UNKNOWN){}  //先什麼都不做
         else{
-            fprintf(stderr, "do_move錯誤，被吃顏色錯誤！\n");
+            fprintf(stderr, "do_move error, eaten color wrong!\n");
             exit(1);
         }
     }
-    else if(board[dst] > 0){ // 捕獲玩家棋子
-        int captured_piece = piece_board[dst];
-        pos[captured_piece] = -1;
-        move |= captured_piece << 8;
-        // 標記被捕獲的棋子為已揭露
-        revealed[captured_piece] = true;
-
-        if(color[captured_piece] == RED) piece_nums[0] -= 1;
-        else if(color[captured_piece] == BLUE) piece_nums[1] -= 1;
+    else if(board[dst] > 0){    //User's color
+        pos[piece_board[dst]] = -1;
+        move |= piece_board[dst] << 8;
+        if(color[piece_board[dst]] == RED) piece_nums[0] -= 1;
+        else if(color[piece_board[dst]] == BLUE) piece_nums[1] -= 1;
+        else if(color[piece_board[dst]] == UNKNOWN){}  //先什麼都不做
         else{
-            fprintf(stderr, "do_move錯誤，被吃顏色錯誤！\n");
+            fprintf(stderr, "do_move error, eaten color wrong!\n");
             exit(1);
         }
     }
@@ -280,13 +269,13 @@ void GST::do_move(int move){
         move |= 0x1000;
     }
 
-    board[pos[piece]] = 0;
-    piece_board[pos[piece]] = -1;
-    board[dst] = (piece < PIECES) ? 1 : -1; // 僅存儲存在，非顏色
-    piece_board[dst] = piece;
-    pos[piece] = dst;
+    board[pos[piece]] = 0;          //set 0 at the location which stay before => space: color = 0
+    piece_board[pos[piece]] = -1;   //set 0 at the location which stay before => space: no chess
+    board[dst] = color[piece];      //color the chess color at the location after move
+    piece_board[dst] = piece;       //set chess number at the location after move
+    pos[piece] = dst;               //the location of chess now
     history[n_plies++] = move;
-    nowTurn ^= 1; // 切換玩家
+    nowTurn ^= 1; //change player
 }
 
 // void GST::undo(){
@@ -342,36 +331,21 @@ void GST::do_move(int move){
 //     pos[piece] = src;
 // }
 
-bool GST::is_over(){
-    // 检查回合数是否达到200，如果达到则判定为平局
-    if(n_plies >= 20) {
-        winner = -2; // -2表示平局
-        return true;
-    }
-    
+bool GST::is_over(){    //game end or not => the number of remain chess color
+    // if(n_plies >= 200) {
+    //     winner = -2; // -2表示平局
+    //     return true;
+    // }
     if(winner != -1) return true;
     else{
-        // 1. 玩家1的紅色棋子全部被吃光，玩家1獲勝
-        if(piece_nums[0] == 0) {
+        if(piece_nums[0] == 0 || piece_nums[3] == 0){
             winner = USER;
             return true;
         }
-        // 2. 玩家2的紅色棋子全部被吃光，玩家2獲勝
-        else if(piece_nums[2] == 0) {
+        else if(piece_nums[1] == 0 || piece_nums[2] == 0){
             winner = ENEMY;
             return true;
         }
-        // 3. 玩家1的藍色棋子全部被吃光，玩家2獲勝
-        else if(piece_nums[1] == 0) {
-            winner = ENEMY;
-            return true;
-        }
-        // 4. 玩家2的藍色棋子全部被吃光，玩家1獲勝
-        else if(piece_nums[3] == 0) {
-            winner = USER;
-            return true;
-        }
-        // 5. 藍色棋子逃到對角已經在do_move中處理並設置了winner和is_escape
     }
     return false;
 }
@@ -419,10 +393,10 @@ int move_index = 0;
 // }
 
 // 使用ismcts替代flat_mc函數
-int ismcts_move(GST& game, int simu_times) {
-    ISMCTS ismcts(simu_times);
-    return ismcts.findBestMove(game);
-}
+// int ismcts_move(GST& game, int simu_times) {
+//     ISMCTS ismcts(simu_times);
+//     return ismcts.findBestMove(game);
+// }
 
 int main(){
     // 為Mac初始化隨機數生成

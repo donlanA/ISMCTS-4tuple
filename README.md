@@ -6,11 +6,13 @@
 
 ### 合併思路
 
-1. 確認 gst 程式可以讓 4tuple 正常運作 (可以連接 server)
+1. (完成) 確認 gst 程式可以讓 4tuple 正常運作 (可以連接 server)
 
-2. 修改 ISMCTS.cpp 當中 simulation 的部分，讓 ISMCTS 考慮 4tuple
+2. 確認 gst 程式可以讓 ismcts 正常運作 (可以連接 server)
 
-3. 修改 gst-endgame，測試是否能在殘局有更好的表現 (gst-endgame 與 gst 只差在 init_board 的部分)
+3. 修改 ISMCTS.cpp 當中 simulation 的部分，讓 ISMCTS 考慮 4tuple
+
+4. 修改 gst-endgame，測試是否能在殘局有更好的表現 (gst-endgame 與 gst 只差在 init_board 的部分)
 
 ### 進度
 

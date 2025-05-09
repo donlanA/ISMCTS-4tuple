@@ -5,7 +5,9 @@
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+
 constexpr int MCTS::dir_val[4];
+
 // MCTS implementation
 MCTS::MCTS(int simulations) : simulations(simulations) {
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -13,11 +15,9 @@ MCTS::MCTS(int simulations) : simulations(simulations) {
 }
 
 void MCTS::reset() {
-    // 重新初始化隨機數生成器
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     rng.seed(static_cast<unsigned int>(seed));
     
-    // 清理搜尋樹
     Node::cleanup(root);
 }
 bool MCTS::would_eat_enemy_red(const GST& game, int piece, int dst) const {
@@ -31,6 +31,7 @@ bool MCTS::would_eat_enemy_red(const GST& game, int piece, int dst) const {
     int target_color = game.get_color(target_piece);
     return std::abs(target_color) == RED;
 }
+
 void MCTS::selection(Node*& node) {
     while (!node->state.is_over() && !node->children.empty()) {
         Node* bestChild = nullptr;
@@ -48,11 +49,10 @@ void MCTS::selection(Node*& node) {
             }
         }
 
-        if (bestChild) {
+        if (bestChild) 
             node = bestChild;
-        } else {
+         else 
             break;
-        }
     }
 }
 
@@ -62,7 +62,6 @@ void MCTS::expansion(Node* node) {
     int moves[MAX_MOVES];
     int moveCount = node->state.gen_all_move(moves);
 
-    // 為每個有效的移動創建子節點，不做過濾
     for (int i = 0; i < moveCount; i++) {
         int move = moves[i];
         int piece = move >> 4;
@@ -77,7 +76,6 @@ void MCTS::expansion(Node* node) {
         newNode->parent = node;
         node->children.push_back(std::move(newNode));
     }
-    
 }
 
 int MCTS::simulation(GST& state) {
@@ -116,9 +114,8 @@ void MCTS::backpropagation(Node* node, int result) {
 }
 
 double MCTS::calculateUCB(const Node* node) const {
-    if (node->visits == 0) {
-        return std::numeric_limits<double>::infinity();
-    }
+    if (node->visits == 0) return std::numeric_limits<double>::infinity();
+    
 
     double exploitation = static_cast<double>(node->wins) / node->visits;
     double exploration = EXPLORATION_PARAM * std::sqrt(std::log(node->parent->visits) / node->visits);
@@ -161,7 +158,7 @@ int MCTS::findBestMove(GST& game) {
         // 反向傳播結果
         backpropagation(nodeToSimulate, result);
     }
-    // Select the best move based on the highest visit count
+
     Node* bestChild = nullptr;
     int maxVisits = -1;
 

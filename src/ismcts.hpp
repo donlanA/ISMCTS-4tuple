@@ -3,12 +3,12 @@
 
 #include "gst.hpp"
 // #include "4T_GST.hpp"
-#include "node.hpp" // 使用共用的 Node 類
+#include "node.hpp"
 #include <vector>
 #include <memory>
 #include <random>
 #include <cmath>
-#include <unordered_map> // 新增 header 支援 map
+#include <unordered_map>
 
 class ISMCTS {
 private:

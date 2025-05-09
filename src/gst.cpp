@@ -195,7 +195,7 @@ void GST::do_move(int move){    //move chess
             return;
         }
     }
-    if (n_plies == MAX_PLIES) {
+    if (n_plies == 1000) {
         fprintf(stderr, "cannot do anymore moves\n");
         exit(1);
     }

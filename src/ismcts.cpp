@@ -335,17 +335,6 @@ void ISMCTS::printNodeStats(const Node *node, int indent) const
     }
 }
 
-std::vector<int> get_move_path(Node* node) {
-    std::vector<int> moves;
-    while (node && node->parent != nullptr) {
-        moves.push_back(node->move);
-        node = node->parent;
-    }
-    std::reverse(moves.begin(), moves.end());
-    return moves;
-}
-
-
 // void printTree(Node* node, int depth = 0, int maxDepth = 2) {
 //     if (!node || depth > maxDepth) return;
 //     const char* dirNames[] = {"S", "E", "W", "N"};
@@ -433,7 +422,6 @@ int ISMCTS::findBestMove(GST &game) {
         //     system("pause");
         // }
 
-        
     }
 
     Node* bestChild = nullptr;

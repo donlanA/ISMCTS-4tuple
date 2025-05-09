@@ -37,7 +37,7 @@ int nowTurn;
     bool is_escape = false;
     bool revealed[PIECES * 2] = {false};
 
-    int history[MAX_PLIES];
+    int history[1000];
     int n_plies;
 
 public:

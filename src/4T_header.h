@@ -30,11 +30,17 @@
 #include <chrono>
 #include <random>
 #include <time.h>
-#include <direct.h>
 #include <algorithm>
-#include <windows.h>
-// #include <unistd.h>
 #include <iomanip>
+
+#ifdef _WIN32
+    #include <windows.h>
+    #include <direct.h>
+#elif defined(__APPLE__)
+    #include <mach/mach_time.h>
+    #include <unistd.h>
+    #include <sys/stat.h>
+#endif
 
 #include "pcg_random.hpp"
 #include "4T_DATA.hpp"

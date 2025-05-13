@@ -1,8 +1,7 @@
 #ifndef MCTS_HPP
 #define MCTS_HPP
 
-#include "gst.hpp"
-// #include "4T_GST.hpp"
+#include "4T_GST.hpp"
 #include "node.hpp"
 #include <vector>
 #include <memory>

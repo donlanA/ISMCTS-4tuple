@@ -2,18 +2,6 @@
 #define GST_HPP
 
 #include "4T_header.h"
-// #define ROW 6
-// #define COL 6
-// #define PIECES 8
-// #define MAX_PLIES 1000
-// #define MAX_MOVES 32
-
-// #define RED 1
-// #define BLUE 2
-// #define UNKNOWN 3
-
-// #define USER 0
-// #define ENEMY 1
 
 class DATA;
 

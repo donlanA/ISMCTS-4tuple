@@ -12,7 +12,7 @@
 #include <time.h>
 #include <random>
 #include <chrono>
-#include <unistd.h>
+// #include <unistd.h>
 #include <iomanip>
 
 static std::map<char, int> piece_index = {
@@ -29,111 +29,111 @@ static const int dir_val[4] = {-COL, -1, 1, COL};
 
 //initialize data
 void GST::init_board(){
-    /*
-        A  B  C  D  E  F  G  H  a  b  c  d  e  f  g  h
-        0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15  <-piece index, used in pos and color
-       25 26 27 28 31 32 33 34 10  9  8  7  4  3  2  1  <-position on board
-    */
+    // /*
+    //     A  B  C  D  E  F  G  H  a  b  c  d  e  f  g  h
+    //     0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15  <-piece index, used in pos and color
+    //    25 26 27 28 31 32 33 34 10  9  8  7  4  3  2  1  <-position on board
+    // */
 
-    memset(board, 0, sizeof(board));
-    memset(pos, 0, sizeof(pos));
-    memset(revealed, false, sizeof(revealed));
-    for(int i=0; i<ROW*COL; i++) piece_board[i] = -1;
-    for(int i=0; i<4; i++) piece_nums[i] = 4;
-    for(int i=0; i<PIECES; i++) {   //set color
-        color[i] = BLUE;
-        color[i+8] = -BLUE;
-    }
-    nowTurn = USER;
-    winner = -1;
-    n_plies = 0;
+    // memset(board, 0, sizeof(board));
+    // memset(pos, 0, sizeof(pos));
+    // memset(revealed, false, sizeof(revealed));
+    // for(int i=0; i<ROW*COL; i++) piece_board[i] = -1;
+    // for(int i=0; i<4; i++) piece_nums[i] = 4;
+    // for(int i=0; i<PIECES; i++) {   //set color
+    //     color[i] = BLUE;
+    //     color[i+8] = -BLUE;
+    // }
+    // nowTurn = USER;
+    // winner = -1;
+    // n_plies = 0;
 
-    // random set red pieces
-    int red_num = 0;        // 現在有幾個紅棋
-    bool red_or_not[8];     // 哪個位置已經是紅棋了
-    std::fill(std::begin(red_or_not), std::end(red_or_not), false);
-    char red[4];
-    char red2[4];
+    // // random set red pieces
+    // int red_num = 0;        // 現在有幾個紅棋
+    // bool red_or_not[8];     // 哪個位置已經是紅棋了
+    // std::fill(std::begin(red_or_not), std::end(red_or_not), false);
+    // char red[4];
+    // char red2[4];
 
-    while(red_num != 4){
-        int x = rng(8);
-        if(!red_or_not[x]){
-            red[red_num] = print_piece[x];
-            red_or_not[x] = true;
-            red_num += 1;
-        }
-    }
+    // while(red_num != 4){
+    //     int x = rng(8);
+    //     if(!red_or_not[x]){
+    //         red[red_num] = print_piece[x];
+    //         red_or_not[x] = true;
+    //         red_num += 1;
+    //     }
+    // }
 
-    red_num = 0;
-    std::fill(std::begin(red_or_not), std::end(red_or_not), false);
-    while(red_num != 4){
-        int x = rng(8);
-        if(!red_or_not[x]){
-            red2[red_num] = print_piece[x+8];
-            red_or_not[x] = true;
-            red_num += 1;
-        }
-    }
+    // red_num = 0;
+    // std::fill(std::begin(red_or_not), std::end(red_or_not), false);
+    // while(red_num != 4){
+    //     int x = rng(8);
+    //     if(!red_or_not[x]){
+    //         red2[red_num] = print_piece[x+8];
+    //         red_or_not[x] = true;
+    //         red_num += 1;
+    //     }
+    // }
     
-    for(int i=0; i<4; i++){
-        color[piece_index[red[i]]] = RED;
-        color[piece_index[red2[i]]] = -RED;
+    // for(int i=0; i<4; i++){
+    //     color[piece_index[red[i]]] = RED;
+    //     color[piece_index[red2[i]]] = -RED;
         
-        if (piece_index[red2[i]] >= PIECES) {
-            revealed[piece_index[red2[i]]] = true;
-        }
-    }
-    for(int i=PIECES; i<PIECES*2; i++) {
-        if(color[i] == -BLUE) {
-            revealed[i] = true;
-        }
-    }
+    //     if (piece_index[red2[i]] >= PIECES) {
+    //         revealed[piece_index[red2[i]]] = true;
+    //     }
+    // }
+    // for(int i=PIECES; i<PIECES*2; i++) {
+    //     if(color[i] == -BLUE) {
+    //         revealed[i] = true;
+    //     }
+    // }
 
-    //set all pieces position and board
-    int offset = 0;
-    for(int player=0; player<2; player++){
-        for(int i=0; i<PIECES; i++){
-            board[init_pos[player][i]] = color[i+offset];   //board: record the color in this location(0~3)
-            piece_board[init_pos[player][i]] = i + offset;  //piece_booard: write chess number in board, chess number(0~15)/ space(-1)
-            pos[i+offset] = init_pos[player][i];    //pos: record the chess index(0~15)
-        }
-        offset+=8;
-    }
+    // //set all pieces position and board
+    // int offset = 0;
+    // for(int player=0; player<2; player++){
+    //     for(int i=0; i<PIECES; i++){
+    //         board[init_pos[player][i]] = color[i+offset];   //board: record the color in this location(0~3)
+    //         piece_board[init_pos[player][i]] = i + offset;  //piece_booard: write chess number in board, chess number(0~15)/ space(-1)
+    //         pos[i+offset] = init_pos[player][i];    //pos: record the chess index(0~15)
+    //     }
+    //     offset+=8;
+    // }
 
-    return;
+    // return;
 }
 
 void GST::print_board(){    //print the board now & print User's remain chess & print eaten Enemy's chess
-    printf("step = %d\n", step - 1);
-    for (int i = 0; i < ROW * COL; i++) {
-        if(piece_board[i] != -1){
-            if(abs(color[piece_board[i]]) == RED) SetColor(4);
-            else if(abs(color[piece_board[i]]) == BLUE) SetColor(9);
-            printf("%4c", print_piece[piece_board[i]]);
-            SetColor();
-        }
-        else if(i == 0 || i == 30) printf("%4c", '<');
-        else if(i == 5 || i == 35) printf("%4c", '>');
-        else printf("%4c", '-');           
-        if(i % 6 == 5) printf("\n");
-    }
-    printf("\n");
-    printf("User remaining ghosts: ");
-    for(int i=0; i<PIECES; i++){
-        if(pos[i] != -1) printf("%c: %s ", print_piece[i], color[i]==RED ? "red":"blue");
-    }
-    printf("\n");
-    printf("Eaten enemy ghosts: ");
-    for(int i=8; i<PIECES*2; i++){
-        if(pos[i] == -1) printf("%c: %s ", print_piece[i], color[i]==-RED ? "red":"blue");
-    }
-    printf("\n");
+//     printf("step = %d\n", step - 1);
+//     for (int i = 0; i < ROW * COL; i++) {
+//         if(piece_board[i] != -1){
+//             if(abs(color[piece_board[i]]) == RED) SetColor(4);
+//             else if(abs(color[piece_board[i]]) == BLUE) SetColor(9);
+//             printf("%4c", print_piece[piece_board[i]]);
+//             SetColor();
+//         }
+//         else if(i == 0 || i == 30) printf("%4c", '<');
+//         else if(i == 5 || i == 35) printf("%4c", '>');
+//         else printf("%4c", '-');           
+//         if(i % 6 == 5) printf("\n");
+//     }
+//     printf("\n");
+//     printf("User remaining ghosts: ");
+//     for(int i=0; i<PIECES; i++){
+//         if(pos[i] != -1) printf("%c: %s ", print_piece[i], color[i]==RED ? "red":"blue");
+//     }
+//     printf("\n");
+//     printf("Eaten enemy ghosts: ");
+//     for(int i=8; i<PIECES*2; i++){
+//         if(pos[i] == -1) printf("%c: %s ", print_piece[i], color[i]==-RED ? "red":"blue");
+//     }
+//     printf("\n");
 
-    // for(int i = 0; i < 36; i++){
-    //     printf("%d ", board[i]);
-    //     if(i % 6 == 5) printf("\n");
-    // }
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+//     // for(int i = 0; i < 36; i++){
+//     //     printf("%d ", board[i]);
+//     //     if(i % 6 == 5) printf("\n");
+//     // }
+//     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 int GST::gen_move(int* move_arr, int piece, int location, int& count){  //generate the possible step
@@ -351,6 +351,7 @@ int move_index = 0;
 //     }
 //     return root_moves[move_index];
 // }
+
 // 使用ismcts替代flat_mc函數
 // int ismcts_move(GST& game, int simu_times) {
 //     ISMCTS ismcts(simu_times);

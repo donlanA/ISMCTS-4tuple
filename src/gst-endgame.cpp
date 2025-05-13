@@ -12,7 +12,7 @@
 #include <time.h>
 #include <random>
 #include <chrono>
-#include <unistd.h>
+// #include <unistd.h>
 #include <iomanip>
 
 static std::map<char, int> piece_index = {
@@ -278,59 +278,6 @@ void GST::do_move(int move){    //move chess
     nowTurn ^= 1; //change player
 }
 
-// void GST::undo(){
-//     if(winner != -1) winner = -1;
-    
-//     if (n_plies == 0) {
-//         fprintf(stderr, "no history\n");
-//         exit(1);
-//     }
-
-//     nowTurn ^= 1; //change player
-
-//     int move = history[--n_plies];
-//     int check_eaten = move >> 12;
-//     int eaten_piece = (move & 0xfff) >> 8;
-//     int piece = (move & 0xff) >> 4;
-//     int direction = move & 0xf;
-//     int src = pos[piece] - dir_val[direction];
-
-//     if(is_escape){
-//         is_escape = false;
-//         return;
-//     }
-
-//     if (check_eaten != 0x1) {
-//         board[pos[piece]] = (eaten_piece < PIECES) ? 1 : -1; // Just store presence, not color
-//         piece_board[pos[piece]] = eaten_piece;
-//         pos[eaten_piece] = pos[piece];
-        
-//         if(nowTurn == USER){
-//             if(color[eaten_piece] == -RED) piece_nums[2] += 1;
-//             else if(color[eaten_piece] == -BLUE) piece_nums[3] += 1;
-//             else{
-//                 fprintf(stderr, "undo error, eaten color wrong!");
-//                 exit(1);
-//             }
-//         }else{
-//             if(color[eaten_piece] == RED) piece_nums[0] += 1;
-//             else if(color[eaten_piece] == BLUE) piece_nums[1] += 1;
-//             else{
-//                 fprintf(stderr, "undo error, eaten color wrong!");
-//                 exit(1);
-//             }
-//         }
-//     }
-//     else{
-//         board[pos[piece]] = 0;
-//         piece_board[pos[piece]] = -1;
-//     } 
-
-//     board[src] = (piece < PIECES) ? 1 : -1; // Just store presence, not color
-//     piece_board[src] = piece;
-//     pos[piece] = src;
-// }
-
 bool GST::is_over(){    //game end or not => the number of remain chess color
     // if(n_plies >= 200) {
     //     winner = -2; // -2表示平局
@@ -351,52 +298,6 @@ bool GST::is_over(){    //game end or not => the number of remain chess color
 }
 
 int move_index = 0;
-
-// int flat_mc(GST& game, int simu_times){
-//     int root_nmove, n_move;
-//     int root_moves[MAX_MOVES];
-//     int moves[MAX_MOVES];
-//     int wins, count;
-//     int maxWins = -1;
-//     int move_index = 0;
-    
-//     root_nmove = game.gen_all_move(root_moves);
-//     for(int m=0; m<root_nmove; m++){
-//         game.do_move(root_moves[m]);
-//         //random simu
-//         wins = 0;
-//         for(int t=0; t<simu_times; t++){
-//             count = 0;
-//             while(!game.is_over()){
-//                 n_move = game.gen_all_move(moves);
-//                 int x = rand();
-//                 game.do_move(moves[x%n_move]);
-//                 count++;
-//             }
-            
-//             if(game.get_winner() == ENEMY){
-//                 wins++;
-//             }
-
-//             for(int c=0; c<count; c++){
-//                 game.undo();
-//             }
-//         }
-//         if(wins > maxWins){
-//             maxWins = wins;
-//             move_index = m;
-//         }
-//         printf("move %d, win rate = %f\n", m, (float)wins/(float)simu_times);
-//         game.undo();
-//     }
-//     return root_moves[move_index];
-// }
-
-// 使用ismcts替代flat_mc函數
-// int ismcts_move(GST& game, int simu_times) {
-//     ISMCTS ismcts(simu_times);
-//     return ismcts.findBestMove(game);
-// }
 
 int main(){
     // 為Mac初始化隨機數生成

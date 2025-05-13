@@ -218,7 +218,7 @@ double ISMCTS::simulation(GST &state) {
     if (!simState.is_over() && moveCounter >= maxMoves)
         return 0;
 
-    int winner = simState.get_winner() == ENEMY ? 1 : -1;
+    int winner = simState.get_winner() == USER ? 1 : -1;
 
     // 輸出模擬盤面
     // if (simState.is_escape && simState.get_winner() == ENEMY)
@@ -390,7 +390,7 @@ int ISMCTS::findBestMove(GST &game) {
     int maxVisits = -1;
 
 
-    const char *dirNames[] = {"S", "E", "W", "N"};
+    const char *dirNames[] = {"N","W","E","S"};
 
     std::cout << "ISMCTS Decision Statistics:\n";
     bool hasValidMoves = false;

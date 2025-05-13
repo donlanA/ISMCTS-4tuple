@@ -6,21 +6,25 @@
 
 ### 合併思路
 
-1. (完成) 確認 gst 程式可以讓 4tuple 正常運作 (可以連接 server)
+1. (完成) 確認 4T 系列程式可以讓 4tuple 正常運作 (可以連接 server)
 
-2. 確認 gst 程式可以讓 ismcts 正常運作 (可以連接 server)
+2. (完成) 確認 gst 系列程式可以讓 ismcts 正常運作
 
-3. 修改 ISMCTS.cpp 當中 simulation 的部分，讓 ISMCTS 考慮 4tuple
+3. 在 endgame 確認 ismcts 設為 USER 方也可以正常運作
 
-4. 修改 gst-endgame，測試是否能在殘局有更好的表現 (gst-endgame 與 gst 只差在 init_board 的部分)
+4. 確認 ismcts 可以連接 server (編碼可能有錯)
+
+5. 修改 ISMCTS.cpp 當中 simulation 的部分，讓 ISMCTS 考慮 4tuple
+
+6. 修改 gst-endgame，測試是否能在殘局有更好的表現 (gst-endgame 與 gst 只差在 init_board 的部分)
 
 ### 進度
 
 ISMCTS、4tuple 各自都可以運作
 
-gst、gst-endgame目前都是讓mcts與ismcts對打，需要修改成連接server
+gst、gst-endgame 可以讓 mcts 與 ismcts 對打
 
-應該會合併 ISMCTS 跟 4tuple 的 GST
+ISMCTS 跟 4tuple 都可以接 4T_GST
 
 ## Playing
 ### move direction:

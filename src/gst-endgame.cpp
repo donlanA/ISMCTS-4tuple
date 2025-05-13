@@ -83,14 +83,11 @@ void GST::init_board(){
         color[piece_index[red[i]]] = RED;
         color[piece_index[red2[i]]] = -RED;
         
-        if (piece_index[red2[i]] >= PIECES) {
-            revealed[piece_index[red2[i]]] = true;
-        }
     }
-    for(int i=PIECES; i<PIECES*2; i++) {
-        if(color[i] == -BLUE) {
-            revealed[i] = true;
-        }
+    
+    for(int i=0; i<PIECES; i++) {
+        revealed[i] = true;
+        
     }
 
     // // USER 紅色幽靈設定
@@ -256,6 +253,7 @@ void GST::do_move(int move){    //move chess
     else if(board[dst] > 0){    //User's color
         pos[piece_board[dst]] = -1;
         move |= piece_board[dst] << 8;
+        revealed[piece_board[dst]] = true;
         if(color[piece_board[dst]] == RED) piece_nums[0] -= 1;
         else if(color[piece_board[dst]] == BLUE) piece_nums[1] -= 1;
         else if(color[piece_board[dst]] == UNKNOWN){}  //先什麼都不做

@@ -36,8 +36,11 @@ void SetColor(int color = 7){
 void GST::set_board(char* position){        //for server
     memset(board, 0, sizeof(board));
     memset(pos, 0, sizeof(pos));
+    memset(revealed, false, sizeof(revealed));
     for(int i = 0; i < ROW * COL; i++) piece_board[i] = -1;
     for(int i = 0; i < 4; i++) piece_nums[i] = 4;
+
+
     nowTurn = USER;
     winner = -1;
 
@@ -50,7 +53,7 @@ void GST::set_board(char* position){        //for server
 
         if(x == '9' && y == '9'){
             pos[i] = -1;    //被吃掉
-
+            revealed[i] = true;
             if(i < PIECES){
                 if(c == 'r'){
                     color[i] = RED;
@@ -79,9 +82,11 @@ void GST::set_board(char* position){        //for server
             if(i < PIECES) {     //User
                 if(c == 'R') color[i] = RED;
                 else if(c == 'B') color[i] = BLUE;
+                revealed[i] = true;
             }
             else{       //Enemy
                 if(c == 'u') color[i] = -UNKNOWN;      //未知的棋
+                revealed[i] = false;
             }
             
             // 更新棋盤
@@ -151,15 +156,6 @@ void GST::init_board(){
     for(int i=0; i<4; i++){
         color[piece_index[red[i]]] = RED;
         color[piece_index[red2[i]]] = -RED;
-
-        if (piece_index[red2[i]] >= PIECES) {
-            revealed[piece_index[red2[i]]] = true;
-        }
-    }
-    for(int i=PIECES; i<PIECES*2; i++) {
-        if(color[i] == -BLUE) {
-            revealed[i] = true;
-        }
     }
 
     //set all pieces position and board
@@ -299,6 +295,7 @@ void GST::do_move(int move){    //move chess
     else if(board[dst] > 0){    //User's color
         pos[piece_board[dst]] = -1;
         move |= piece_board[dst] << 8;
+        revealed[piece_board[dst]] = true;
         if(color[piece_board[dst]] == RED) piece_nums[0] -= 1;
         else if(color[piece_board[dst]] == BLUE) piece_nums[1] -= 1;
         else if(color[piece_board[dst]] == UNKNOWN){}  //先什麼都不做
@@ -691,7 +688,7 @@ int GST::highest_weight(DATA& d){
         int x = rng(same_idx - 1);
         do_idx = SAME[x];
     }
-    // printf("do move = %d\n", do_idx);
+    printf("return: %d\n", root_moves[do_idx]);
 
     return root_moves[do_idx];
 }

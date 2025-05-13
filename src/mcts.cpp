@@ -101,7 +101,7 @@ int MCTS::simulation(GST& state) {
         return 0; // 平局
     }
 
-    return simState.get_winner() == USER ? 1 : -1;
+    return simState.get_winner() == ENEMY ? 1 : -1;
 }
 
 void MCTS::backpropagation(Node* node, int result) {

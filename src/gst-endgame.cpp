@@ -30,8 +30,8 @@ static const int dir_val[4] = {-COL, -1, 1, COL};
 void GST::init_board(){
     /*
         A  B  C  D  E  F  G  H  a  b  c  d  e  f  g  h
-        0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15  <-棋子索引，用於pos和color
-       25 26 27 28 31 32 33 34 10  9  8  7  4  3  2  1  <-棋盤上的位置
+        0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15  <-piece index, used in pos and color
+       25 26 27 28 31 32 33 34 10  9  8  7  4  3  2  1  <-position on board
     */
 
     memset(board, 0, sizeof(board));
@@ -39,7 +39,7 @@ void GST::init_board(){
     memset(revealed, false, sizeof(revealed));
     for(int i=0; i<ROW*COL; i++) piece_board[i] = -1;
     for(int i=0; i<4; i++) piece_nums[i] = 0;
-    for(int i=0; i<PIECES; i++) {
+    for(int i=0; i<PIECES; i++) {   //set color
         color[i] = BLUE;
         color[i+8] = -BLUE;
     }
@@ -70,10 +70,10 @@ void GST::init_board(){
         }
     }
     for (int i = 0; i < PIECES * 2; i++) {
-    if (pos[i] == -1) {  // 棋子不在棋盤上
-        revealed[i] = true;  // 標記為已揭露
+        if (pos[i] == -1) {
+            revealed[i] = true;
+        }
     }
-}
     // 設置紅色棋子 
     char red[4] = {'A','B','D','F'}; // 用戶
     char red2[4] = {'a','b','d','f'}; // 敵人
@@ -147,8 +147,7 @@ void GST::init_board(){
 }
 
 
-void GST::print_board(){
-    // 直接在控制台顯示棋盤
+void GST::print_board(){    //print the board now & print User's remain chess & print eaten Enemy's chess
     for (int i = 0; i < ROW; i++) {
         for (int j = 0; j < COL; j++) {
             if(piece_board[i * ROW + j] != -1) 
@@ -162,15 +161,15 @@ void GST::print_board(){
         }
         printf("\n");
     }
-
-    // 顯示棋子信息
-    printf("\n玩家剩餘棋子: ");
+    printf("\n");
+    printf("User remaining ghosts: ");
     for(int i=0; i<PIECES; i++){
-        if(pos[i] != -1) printf("%c: %s ", print_piece[i], color[i]==1 ? "red":"blue");
+        if(pos[i] != -1) printf("%c: %s ", print_piece[i], color[i]==RED ? "red":"blue");
     }
-    printf("\n被吃掉的敵方棋子: ");
+    printf("\n");
+    printf("Eaten enemy ghosts: ");
     for(int i=8; i<PIECES*2; i++){
-        if(pos[i] == -1) printf("%c: %s ", print_piece[i], color[i]==-1 ? "red":"blue");
+        if(pos[i] == -1) printf("%c: %s ", print_piece[i], color[i]==-RED ? "red":"blue");
     }
     printf("\n");
 }
@@ -306,10 +305,10 @@ int main(){
     std::uniform_int_distribution<> dist(0, 7);
     
     GST game;
-    MCTS mcts(10000);     // 初始化MCTS為玩家1（先手）
-    ISMCTS ismcts(10000); // 初始化ISMCTS為玩家2（後手）
+    MCTS mcts(10000);
+    ISMCTS ismcts(10000);
     
-    bool my_turn = true; // MCTS先行
+    bool my_turn = true;
     
     // 初始化棋盤
     game.init_board();
@@ -320,9 +319,8 @@ int main(){
     // 主遊戲循環
     while(!game.is_over()){
         if(my_turn){
-            // 使用MCTS為玩家1尋找最佳移動
-            std::cout << "Player 1 (MCTS) 思考中...\n";
-            int move = mcts.findBestMove(game);
+            std::cout << "Player 1 (ISMCTS) 思考中...\n";
+            int move = ismcts.findBestMove(game);
             if (move == -1) {
                 std::cout << "MCTS 無法找到有效移動，玩家1可能已經輸了！\n";
                 break;
@@ -331,9 +329,8 @@ int main(){
             // 直接執行移動
             game.do_move(move);
         } else {
-            // 使用ISMCTS為玩家2尋找最佳移動
-            std::cout << "Player 2 (ISMCTS) 思考中...\n";
-            int move = ismcts.findBestMove(game);
+            std::cout << "Player 2 (MCTS) 思考中...\n";
+            int move = mcts.findBestMove(game);
             if (move == -1) {
                 std::cout << "ISMCTS 無法找到有效移動，玩家2可能已經輸了！\n";
                 break;
@@ -358,7 +355,7 @@ int main(){
     if(winner == -2) {
         printf("遊戲結束！達到20回合，判定為平局！\n");
     } else {
-        printf("遊戲結束！%s 獲勝！\n", winner ? "Player 2 (ISMCTS)" : "Player 1 (MCTS)");
+        printf("遊戲結束！%s 獲勝！\n", winner ? "Player 2 (MCTS)" : "Player 1 (ISMCTS)");
         
         // 顯示勝利原因
         if(game.is_escape) {

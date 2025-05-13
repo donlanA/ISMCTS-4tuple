@@ -1,8 +1,10 @@
 #include "../4T_header.h"
 #include "MyAI.h"
+#include "../ismcts.hpp"
 
 DATA data;
 GST game;
+ISMCTS ismcts(10000);
 
 MyAI::MyAI(void){
     data.init_data();
@@ -163,7 +165,8 @@ void MyAI::Print_chessboard()
 
 void MyAI::Generate_move(char* move)
 {
-    int best_move = game.highest_weight(data);
+    // int best_move = game.highest_weight(data);
+    int best_move = ismcts.findBestMove(game);
     
     int piece = best_move >> 4;
     int direction = best_move & 0xf;

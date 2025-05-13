@@ -35,108 +35,79 @@ GST ISMCTS::getDeterminizedState(const GST &originalState, int current_iteration
 }
 
 // 隨機化未揭露的敵方棋子
-void ISMCTS::randomizeUnrevealedPieces(GST &state, int current_iteration)
-{
-    const bool *revealed = state.get_revealed(); // 獲取揭露狀態
+void ISMCTS::randomizeUnrevealedPieces(GST& state, int current_iteration) {
+    const bool* revealed = state.get_revealed();
     std::vector<int> unrevealed_pieces;
     int redCount = 0, blueCount = 0;
-
+    
     // 收集未揭露棋子
-    for (int i = PIECES; i < PIECES * 2; i++)
-    {
-        if (revealed[i])
-        {
-            if (state.get_color(i) == RED)
-                redCount++;
-            else
-                blueCount++;
-        }
-        else
-        {
+    for (int i = PIECES; i < PIECES*2; i++) {
+        if (revealed[i]) {
+            if (state.get_color(i) == -RED) redCount++;
+            else blueCount++;
+        } else {
             unrevealed_pieces.push_back(i);
         }
     }
 
-    // 計算剩餘的紅藍棋子數量
     int totalRed = 4;
     int totalBlue = 4;
     int redRemaining = totalRed - redCount;
     int blueRemaining = totalBlue - blueCount;
 
-    // 隨機打亂未揭露棋子列表
-    // std::shuffle(unrevealed_pieces.begin(), unrevealed_pieces.end(), rng);
-
-    // 根據剩餘比例分配顏色
-    // for (size_t i = 0; i < unrevealed_pieces.size(); i++)
-    // {
-    //     int piece = unrevealed_pieces[i];
-    //     if (i < redRemaining)
-    //         state.set_color(piece, RED);
-    //     else
-    //         state.set_color(piece, BLUE);
-    // }
+    if (unrevealed_pieces.empty()) return;
 
     bool use_stats = (current_iteration >= simulations / 2);
 
-    if (!use_stats)
-    {
-        // 前半模擬顏色分配：純隨機確定化 + 紀錄排列字串（在 simulation() 結束後更新）
+    if (!use_stats) {
+        // 早期：純隨機確定化 + 紀錄排列字串（在 simulation() 結束後更新）
         std::shuffle(unrevealed_pieces.begin(), unrevealed_pieces.end(), rng);
-        for (size_t i = 0; i < unrevealed_pieces.size(); i++)
-        {
+        for (size_t i = 0; i < unrevealed_pieces.size(); i++) {
             int piece = unrevealed_pieces[i];
-            if (i < redRemaining)
+            if (i < redRemaining) {
                 state.set_color(piece, -RED);
-            else
+            } else {
                 state.set_color(piece, -BLUE);
+            }
         }
         return;
     }
 
-    // 後半模擬顏色分配：用 arrangement_stats 來推測
+    // 後期：用 arrangement_stats 來推測
     // 生成所有合法排列
     std::vector<std::vector<int>> arrangements;
     int total_pieces = redRemaining + blueRemaining;
     int total_combinations = 1 << total_pieces;
 
-    for (int mask = 0; mask < total_combinations; mask++)
-    {
+    for (int mask = 0; mask < total_combinations; mask++) {
         std::vector<int> arrangement;
         int red = 0, blue = 0;
-        for (int i = 0; i < total_pieces; i++)
-        {
-            if (mask & (1 << i))
-            {
+        for (int i = 0; i < total_pieces; i++) {
+            if (mask & (1 << i)) {
                 arrangement.push_back(-RED);
                 red++;
-            }
-            else
-            {
+            } else {
                 arrangement.push_back(-BLUE);
                 blue++;
             }
         }
-        if (red == redRemaining && blue == blueRemaining)
-        {
+        if (red == redRemaining && blue == blueRemaining) {
             arrangements.push_back(arrangement);
         }
     }
 
     // 計算每個排列的推測勝率
     std::vector<double> win_rates;
-    for (const auto &arrangement : arrangements)
-    {
+    for (const auto& arrangement : arrangements) {
         std::string key;
-        for (auto color : arrangement) key += (color == -RED) ? 'R' : 'B';
-        
+        for (auto color : arrangement) {
+            key += (color == -RED) ? 'R' : 'B';
+        }
 
         auto it = arrangement_stats.find(key);
-        if (it == arrangement_stats.end() || it->second.second == 0)
-        {
+        if (it == arrangement_stats.end() || it->second.second == 0) {
             win_rates.push_back(0.5);
-        }
-        else
-        {
+        } else {
             double win_rate = static_cast<double>(it->second.first) / it->second.second;
             win_rates.push_back(win_rate);
         }
@@ -145,34 +116,31 @@ void ISMCTS::randomizeUnrevealedPieces(GST &state, int current_iteration)
     // 根據反勝率加權
     std::vector<double> weights;
     double total_weight = 0.0;
-    for (double rate : win_rates)
-    {
+    for (double rate : win_rates) {
         double weight = 1.0 - rate + 0.05;
         weights.push_back(weight);
         total_weight += weight;
     }
 
-    for (auto &w : weights) w /= total_weight;
-    
+    for (auto& w : weights) {
+        w /= total_weight;
+    }
 
     // 加權隨機選排列
     std::uniform_real_distribution<> dist(0.0, 1.0);
     double r = dist(rng);
     double cumulative = 0.0;
     int selected_idx = 0;
-    for (size_t i = 0; i < weights.size(); i++)
-    {
+    for (size_t i = 0; i < weights.size(); i++) {
         cumulative += weights[i];
-        if (r <= cumulative)
-        {
+        if (r <= cumulative) {
             selected_idx = i;
             break;
         }
     }
 
-    const auto &selected_arrangement = arrangements[selected_idx];
-    for (size_t i = 0; i < unrevealed_pieces.size(); i++)
-    {
+    const auto& selected_arrangement = arrangements[selected_idx];
+    for (size_t i = 0; i < unrevealed_pieces.size(); i++) {
         state.set_color(unrevealed_pieces[i], selected_arrangement[i]);
     }
 }
@@ -298,42 +266,42 @@ double ISMCTS::calculateUCB(const Node *node) const {
     return winRate + exploration;
 }
 
-void ISMCTS::printNodeStats(const Node *node, int indent) const
-{
-    std::string indentation(indent * 2, ' ');
+// void ISMCTS::printNodeStats(const Node *node, int indent) const
+// {
+//     std::string indentation(indent * 2, ' ');
 
-    // Print current node information
-    int piece = node->move >> 4;
-    int direction = node->move & 0xf;
-    const char *dirNames[] = {"S", "E", "W", "N"};
+//     // Print current node information
+//     int piece = node->move >> 4;
+//     int direction = node->move & 0xf;
+//     const char *dirNames[] = {"S", "E", "W", "N"};
 
-    if (node->move != -1)
-    {
-        std::cout << indentation << "Move: ";
-        if (piece < PIECES)
-            std::cout << static_cast<char>('A' + piece % PIECES);
-        else
-            std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
+//     if (node->move != -1)
+//     {
+//         std::cout << indentation << "Move: ";
+//         if (piece < PIECES)
+//             std::cout << static_cast<char>('A' + piece % PIECES);
+//         else
+//             std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
 
-        std::cout << " " << dirNames[direction];
-        std::cout << " - Wins/Visits: " << node->wins << "/" << node->visits;
-        std::cout << " = " << std::fixed << std::setprecision(2)
-                  << (node->visits > 0 ? static_cast<double>(node->wins) / node->visits : 0) << std::endl;
-    }
-    else
-    {
-        std::cout << indentation << "Root Node - Wins/Visits: " << node->wins << "/" << node->visits << std::endl;
-    }
+//         std::cout << " " << dirNames[direction];
+//         std::cout << " - Wins/Visits: " << node->wins << "/" << node->visits;
+//         std::cout << " = " << std::fixed << std::setprecision(2)
+//                   << (node->visits > 0 ? static_cast<double>(node->wins) / node->visits : 0) << std::endl;
+//     }
+//     else
+//     {
+//         std::cout << indentation << "Root Node - Wins/Visits: " << node->wins << "/" << node->visits << std::endl;
+//     }
 
-    if (node->visits >= 10)
-    {
-        for (const auto &child : node->children)
-        {
-            if (child->visits > 0) printNodeStats(child.get(), indent + 1);
+//     if (node->visits >= 10)
+//     {
+//         for (const auto &child : node->children)
+//         {
+//             if (child->visits > 0) printNodeStats(child.get(), indent + 1);
             
-        }
-    }
-}
+//         }
+//     }
+// }
 
 // void printTree(Node* node, int depth = 0, int maxDepth = 2) {
 //     if (!node || depth > maxDepth) return;
@@ -361,16 +329,10 @@ void ISMCTS::printNodeStats(const Node *node, int indent) const
 // }
 
 int ISMCTS::findBestMove(GST &game) {
-    if (game.is_over())
-    {
-        std::cout << "Game is already over. Winner: " << (game.get_winner() == USER ? "User" : "Enemy") << std::endl;
-        return -1;
-    }
-
-    // 清理之前的搜尋樹
+    
+    if (game.is_over()) return -1;
+    
     Node::cleanup(root);
-
-    // 創建新的根節點 (改用 new 而不是 make_unique)
     root.reset(new Node(game));
     arrangement_stats.clear();
 
@@ -427,23 +389,20 @@ int ISMCTS::findBestMove(GST &game) {
     Node* bestChild = nullptr;
     int maxVisits = -1;
 
-    // Reverse the direction names to match the AI's perspective
+
     const char *dirNames[] = {"S", "E", "W", "N"};
 
-    // Print detailed statistics for each move
     std::cout << "ISMCTS Decision Statistics:\n";
     bool hasValidMoves = false;
 
     for (auto &child : root->children) {
         int piece = child->move >> 4;
         int direction = child->move & 0xf;
-
         std::cout << "移動 ";
         if (piece < PIECES)
             std::cout << static_cast<char>('A' + piece % PIECES);
         else
             std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
-
         std::cout << " " << dirNames[direction] << ": "
                   << child->wins << "/" << child->visits
                   << " = " << std::fixed << std::setprecision(2)
@@ -478,5 +437,21 @@ int ISMCTS::findBestMove(GST &game) {
                   << "%" << std::endl;
     }
 
-    return bestChild ? bestChild->move : -1;
+    // for (auto& child : root->children) {
+    //     if (child->visits > maxVisits) {
+    //         maxVisits = child->visits;
+    //         bestChild = child.get();
+    //     }
+    // }
+
+    // if (bestChild) {
+    //     int piece = bestChild->move >> 4;
+    //     int direction = bestChild->move & 0xf;
+
+    //     printf("piece: %d direction: %d\n", piece, direction);
+    //     printf("勝率: %.2f%%\n", bestChild->visits > 0 ? static_cast<double>(bestChild->wins) / bestChild->visits * 100 : 0.0);
+    // }
+
+    // printf("return: %d\n", bestChild->move);
+    return bestChild->move;
 }

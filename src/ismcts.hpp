@@ -13,7 +13,7 @@ private:
 
     void selection(Node*& node);
     void expansion(Node* node, const GST& determinizedState);
-    double simulation(GST& state);
+    double simulation(GST& state, DATA& d);
     void backpropagation(Node* node, double result);
     double calculateUCB(const Node* node) const;
     GST getDeterminizedState(const GST& originalState, int current_iteration);
@@ -27,7 +27,7 @@ private:
 public:
     ISMCTS(int simulations);
     void reset();
-    int findBestMove(GST& game);
+    int findBestMove(GST& game, DATA& d);
     void printNodeStats(const Node* node, int indent = 0) const;
 };
 

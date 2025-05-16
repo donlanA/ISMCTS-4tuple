@@ -329,13 +329,9 @@ double ISMCTS::calculateUCB(const Node *node) const {
 // }
 
 int ISMCTS::findBestMove(GST &game) {
-
-    std::cout << "Test 1\n";
     
     // if (game.is_over()) return -1;
 
-    std::cout << "Test 2\n";
-    
     Node::cleanup(root);
     root.reset(new Node(game));
     arrangement_stats.clear();
@@ -396,32 +392,60 @@ int ISMCTS::findBestMove(GST &game) {
 
     const char *dirNames[] = {"N","W","E","S"};
 
-    std::cout << "ISMCTS Decision Statistics:\n";
+    // std::cout << "ISMCTS Decision Statistics:\n";
     bool hasValidMoves = false;
 
-    for (auto &child : root->children) {
-        int piece = child->move >> 4;
-        int direction = child->move & 0xf;
-        std::cout << "Move ";
-        if (piece < PIECES)
-            std::cout << static_cast<char>('A' + piece % PIECES);
-        else
-            std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
-        std::cout << " " << dirNames[direction] << ": "
-                  << child->wins << "/" << child->visits
-                  << " = " << std::fixed << std::setprecision(2)
-                  << (child->visits > 0 ? static_cast<double>(child->wins) / child->visits : 0.0)
-                  << std::endl;
+    // for (auto &child : root->children) {
+    //     int piece = child->move >> 4;
+    //     int direction = child->move & 0xf;
+    //     std::cout << "Move ";
+    //     if (piece < PIECES)
+    //         std::cout << static_cast<char>('A' + piece % PIECES);
+    //     else
+    //         std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
+    //     std::cout << " " << dirNames[direction] << ": "
+    //               << child->wins << "/" << child->visits
+    //               << " = " << std::fixed << std::setprecision(2)
+    //               << (child->visits > 0 ? static_cast<double>(child->wins) / child->visits : 0.0)
+    //               << std::endl;
 
+    //     if (child->visits > maxVisits) {
+    //         maxVisits = child->visits;
+    //         bestChild = child.get();
+    //         hasValidMoves = true;
+    //     }
+    // }
+
+    // if (!hasValidMoves) {
+        // std::cout << "No valid moves found. This might indicate the game is already over." << std::endl;
+    //     return -1;
+    // }
+
+    // if (bestChild) {
+    //     int piece = bestChild->move >> 4;
+    //     int direction = bestChild->move & 0xf;
+
+    //     std::cout << "\nChoose best move: ";
+    //     if (piece < PIECES)
+    //         std::cout << static_cast<char>('A' + piece % PIECES);
+    //     else
+    //         std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
+
+    //     std::cout << " " << dirNames[direction] << std::endl;
+    //     std::cout << "Win rate: " << std::fixed << std::setprecision(2)
+    //               << (bestChild->visits > 0 ? static_cast<double>(bestChild->wins) / bestChild->visits * 100 : 0.0)
+    //               << "%" << std::endl;
+    // }
+
+    for (auto& child : root->children) {
         if (child->visits > maxVisits) {
             maxVisits = child->visits;
             bestChild = child.get();
             hasValidMoves = true;
         }
     }
-
     if (!hasValidMoves) {
-        std::cout << "No valid moves found. This might indicate the game is already over." << std::endl;
+        fprintf(stderr, "No valid moves found. This might indicate the game is already over.\n");
         return -1;
     }
 
@@ -429,33 +453,11 @@ int ISMCTS::findBestMove(GST &game) {
         int piece = bestChild->move >> 4;
         int direction = bestChild->move & 0xf;
 
-        std::cout << "\nChoose best move: ";
-        if (piece < PIECES)
-            std::cout << static_cast<char>('A' + piece % PIECES);
-        else
-            std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
-
-        std::cout << " " << dirNames[direction] << std::endl;
-        std::cout << "Win rate: " << std::fixed << std::setprecision(2)
-                  << (bestChild->visits > 0 ? static_cast<double>(bestChild->wins) / bestChild->visits * 100 : 0.0)
-                  << "%" << std::endl;
+        fprintf(stderr, "piece: %d direction: %d\n", piece, direction);
+        fprintf(stderr, "Win Rate: %.2f%%\n", bestChild->visits > 0 ? static_cast<double>(bestChild->wins) / bestChild->visits * 100 : 0.0);
     }
 
-    // for (auto& child : root->children) {
-    //     if (child->visits > maxVisits) {
-    //         maxVisits = child->visits;
-    //         bestChild = child.get();
-    //     }
-    // }
+    fprintf(stderr, "return: %d\n", bestChild->move);
 
-    // if (bestChild) {
-    //     int piece = bestChild->move >> 4;
-    //     int direction = bestChild->move & 0xf;
-
-    //     printf("piece: %d direction: %d\n", piece, direction);
-    //     printf("勝率: %.2f%%\n", bestChild->visits > 0 ? static_cast<double>(bestChild->wins) / bestChild->visits * 100 : 0.0);
-    // }
-
-    // printf("return: %d\n", bestChild->move);
     return bestChild->move;
 }

@@ -688,7 +688,7 @@ int GST::highest_weight(DATA& d){
         int x = rng(same_idx - 1);
         do_idx = SAME[x];
     }
-    printf("return: %d\n", root_moves[do_idx]);
+    // printf("return: %d\n", root_moves[do_idx]);
 
     return root_moves[do_idx];
 }

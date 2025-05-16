@@ -1,12 +1,4 @@
 #include "ismcts.hpp"
-#include <algorithm>
-#include <chrono>
-#include <limits>
-#include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <cstring>
-#include <cassert>
 
 constexpr int ISMCTS::dir_val[4];
 

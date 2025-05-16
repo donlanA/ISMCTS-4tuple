@@ -1,19 +1,8 @@
 #define _CRT_RAND_S
-#include <stdlib.h>
-#include <cstdio>
-#include <cstring>
-#include <string>
-#include <map>
-#include <iostream>
+
 #include "gst-endgame.hpp"
 #include "ismcts.hpp"
 #include "mcts.hpp" 
-
-#include <time.h>
-#include <random>
-#include <chrono>
-// #include <unistd.h>
-#include <iomanip>
 
 static std::map<char, int> piece_index = {
     {'A', 0}, {'B', 1}, {'C', 2}, {'D', 3}, {'E', 4}, {'F', 5}, {'G', 6}, {'H', 7},
@@ -282,10 +271,10 @@ void GST::do_move(int move){    //move chess
 }
 
 bool GST::is_over(){    //game end or not => the number of remain chess color
-    // if(n_plies >= 200) {
-    //     winner = -2; // -2表示平局
-    //     return true;
-    // }
+    if(n_plies >= 200) {
+        winner = -2; // -2表示平局
+        return true;
+    }
     if(winner != -1) return true;
     else{
         if(piece_nums[0] == 0 || piece_nums[3] == 0){

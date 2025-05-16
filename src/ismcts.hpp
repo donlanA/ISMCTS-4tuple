@@ -3,11 +3,6 @@
 
 #include "4T_GST.hpp"
 #include "node.hpp"
-#include <vector>
-#include <memory>
-#include <random>
-#include <cmath>
-#include <unordered_map>
 
 class ISMCTS {
 private:

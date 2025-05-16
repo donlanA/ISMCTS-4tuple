@@ -1,19 +1,8 @@
 #define _CRT_RAND_S
-#include <stdlib.h>
-#include <cstdio>
-#include <cstring>
-#include <string>
-#include <map>
-#include <iostream>
+
 #include "gst.hpp"
 #include "ismcts.hpp"
 #include "mcts.hpp" 
-
-#include <time.h>
-#include <random>
-#include <chrono>
-// #include <unistd.h>
-#include <iomanip>
 
 static std::map<char, int> piece_index = {
     {'A', 0}, {'B', 1}, {'C', 2}, {'D', 3}, {'E', 4}, {'F', 5}, {'G', 6}, {'H', 7},

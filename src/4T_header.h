@@ -32,6 +32,11 @@
 #include <time.h>
 #include <algorithm>
 #include <iomanip>
+#include <limits>
+#include <cassert>
+#include <memory>
+#include <cmath>
+#include <unordered_map>
 
 #ifdef _WIN32
     #include <windows.h>

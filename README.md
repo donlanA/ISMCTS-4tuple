@@ -10,9 +10,9 @@
 
 2. (完成) 確認 gst 系列程式可以讓 ismcts 正常運作
 
-3. 在 endgame 確認 ismcts 設為 USER 方也可以正常運作
+3. (完成) 在 endgame 確認 ismcts 設為 USER 方也可以正常運作
 
-4. 確認 ismcts 可以連接 server (編碼可能有錯)
+4. (完成) 確認 ismcts 可以連接 server
 
 5. 修改 ISMCTS.cpp 當中 simulation 的部分，讓 ISMCTS 考慮 4tuple
 
@@ -24,7 +24,7 @@ ISMCTS、4tuple 各自都可以運作
 
 gst、gst-endgame 可以讓 mcts 與 ismcts 對打
 
-ISMCTS 跟 4tuple 都可以接 4T_GST
+ISMCTS 跟 4tuple 都可以接 4T_GST + 接 server
 
 ## Playing
 ### move direction:

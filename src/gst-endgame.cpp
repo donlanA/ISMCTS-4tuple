@@ -246,6 +246,9 @@ void GST::do_move(int move){    //move chess
         else if(color[piece_board[dst]] == -BLUE) piece_nums[3] -= 1;
         else if(color[piece_board[dst]] == -UNKNOWN){}  //先什麼都不做
         else{
+            fprintf(stderr, "piece: %d, direction: %d\n", piece, direction);
+            fprintf(stderr, "pos[piece]: %d, dir_val[direction]: %d\n", pos[piece], dir_val[direction]);
+            fprintf(stderr, "color[piece_board[dst]]: %d, piece_board[dst]: %d\n", color[piece_board[dst]], piece_board[dst]);
             fprintf(stderr, "do_move error, eaten color wrong!\n");
             exit(1);
         }
@@ -258,6 +261,9 @@ void GST::do_move(int move){    //move chess
         else if(color[piece_board[dst]] == BLUE) piece_nums[1] -= 1;
         else if(color[piece_board[dst]] == UNKNOWN){}  //先什麼都不做
         else{
+            fprintf(stderr, "piece: %d, direction: %d\n", piece, direction);
+            fprintf(stderr, "pos[piece]: %d, dir_val[direction]: %d\n", pos[piece], dir_val[direction]);
+            fprintf(stderr, "color[piece_board[dst]]: %d, piece_board[dst]: %d\n", color[piece_board[dst]], piece_board[dst]);
             fprintf(stderr, "do_move error, eaten color wrong!\n");
             exit(1);
         }

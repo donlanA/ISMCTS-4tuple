@@ -166,7 +166,11 @@ void MyAI::Print_chessboard()
 void MyAI::Generate_move(char* move)
 {
     // int best_move = game.highest_weight(data);
+    std::cout << "Test 0\n";
+    // try {
+
     int best_move = ismcts.findBestMove(game);
+    std::cout << "Test 3\n";
     
     int piece = best_move >> 4;
     int direction = best_move & 0xf;
@@ -185,4 +189,8 @@ void MyAI::Generate_move(char* move)
     snprintf(move, 50, "%c,%s", piece_char, dir_str);
     
     game.do_move(best_move);
+
+    // } catch (const std::exception& e) {
+    //     std::cerr << "findBestMove 例外：" << e.what() << "\n";
+    // }
 }

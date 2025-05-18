@@ -137,14 +137,15 @@ void ISMCTS::randomizeUnrevealedPieces(GST& state, int current_iteration) {
     }
 }
 
-void ISMCTS::selection(Node *&node) {
+void ISMCTS::selection(Node*& node, GST& determinizedState) {
     while (!node->state.is_over() && !node->children.empty()) {
-        Node *bestChild = nullptr;
+        Node* bestChild = nullptr;
         double bestUCB = -std::numeric_limits<double>::infinity();
-
-        for (auto &child : node->children) {
+        
+        for (auto& child : node->children) {
             if (child->visits == 0) {
                 node = child.get();
+                determinizedState.do_move(node->move);  // 更新確定化狀態
                 return;
             }
             double ucb = calculateUCB(child.get());
@@ -154,10 +155,12 @@ void ISMCTS::selection(Node *&node) {
             }
         }
 
-        if (bestChild)
+        if (bestChild) {
             node = bestChild;
-        else
+            determinizedState.do_move(node->move);  // 一路跟著選擇走
+        } else {
             break;
+        }
     }
 }
 
@@ -325,19 +328,19 @@ int ISMCTS::findBestMove(GST &game, DATA &d) {
         GST determinizedState = getDeterminizedState(game, i);
 
         // 選擇階段
-        selection(currentNode);
+        selection(currentNode, determinizedState);
 
-        std::vector<int> path;
-        Node* node = currentNode;
-        while (node && node->parent != nullptr) {
-            path.push_back(node->move);
-            node = node->parent;
-        }
-        std::reverse(path.begin(), path.end());
+        // std::vector<int> path;
+        // Node* node = currentNode;
+        // while (node && node->parent != nullptr) {
+        //     path.push_back(node->move);
+        //     node = node->parent;
+        // }
+        // std::reverse(path.begin(), path.end());
 
-        for (int move : path) {
-            determinizedState.do_move(move);
-        }
+        // for (int move : path) {
+        //     determinizedState.do_move(move);
+        // }
 
         // 如果節點沒有子節點且遊戲未結束，進行擴展
         if (currentNode->children.empty() && !currentNode->state.is_over()) {
@@ -346,16 +349,18 @@ int ISMCTS::findBestMove(GST &game, DATA &d) {
 
         // 確保有子節點可選擇
         Node* nodeToSimulate = currentNode;
+        GST simulationState = determinizedState;
+
         if (!currentNode->children.empty()) {
-            // 隨機選擇一個子節點進行模擬
             std::uniform_int_distribution<> dist(0, currentNode->children.size() - 1);
             int randomIndex = dist(rng);
             auto it = std::next(currentNode->children.begin(), randomIndex);
             nodeToSimulate = it->get();
+
+            // 在確定化狀態上執行這個 move
+            simulationState.do_move(nodeToSimulate->move);
         }
 
-        // 一定要進行模擬
-        GST simulationState = nodeToSimulate->state;
         int result = simulation(simulationState, d);
 
         // 反向傳播結果

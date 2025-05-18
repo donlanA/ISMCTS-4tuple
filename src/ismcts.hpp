@@ -11,7 +11,7 @@ private:
     std::unique_ptr<Node> root; // 添加根節點成員
 
 
-    void selection(Node*& node);
+    void selection(Node*& node, GST& determinizedState);
     void expansion(Node* node, const GST& determinizedState);
     double simulation(GST& state, DATA& d);
     void backpropagation(Node* node, double result);

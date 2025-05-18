@@ -19,6 +19,21 @@ static const int dir_val[4] = {-COL, -1, 1, COL};
 static const int offset_1x4[4] = {0, 1, 2, 3};
 static const int offset_2x2[4] = {0, 1, 6, 7};
 static const int offset_4x1[4] = {0, 6, 12, 18};
+
+void SetColor(int color = 7){
+    #ifdef _WIN32
+        HANDLE hConsole;
+        hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTextAttribute(hConsole,color);
+    #else
+        // For non-Windows platforms, use ANSI escape codes
+        switch(color) {
+            case 4: printf("\033[31m"); break;  // RED
+            case 9: printf("\033[34m"); break;  // BLUE
+            default: printf("\033[0m"); break;  // Reset to default
+        }
+    #endif
+}
 void GST::init_board(){
     auto now = std::chrono::system_clock::now();
     auto now_as_duration = now.time_since_epoch();
@@ -654,15 +669,16 @@ int GST::highest_weight(DATA& d){
 }
 
 // int move_index = 0;
+DATA data;
 
 int main(){
     // 為Mac初始化隨機數生成
-    std::random_device rd;
-    std::mt19937 gen(std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<> dist(0, 7);
+    // std::random_device rd;
+    // std::mt19937 gen(std::chrono::system_clock::now().time_since_epoch().count());
+    // std::uniform_int_distribution<> dist(0, 7);
     
     GST game;
-    DATA data;
+    
     MCTS mcts(10000);
     ISMCTS ismcts(10000);
     

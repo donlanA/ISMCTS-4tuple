@@ -38,9 +38,12 @@ g++ -std=c++11 -O2 src/gst.cpp src/ismcts.cpp src/mcts.cpp src/node.cpp -o game
 ./game
 
 ## Endgame Compile (gst-endgame)
-g++ -std=c++11 -O2 src/gst-endgame.cpp src/ismcts.cpp src/mcts.cpp src/node.cpp -o endgame
+g++ -std=c++11 -O2 src/gst-endgame.cpp src/ismcts.cpp src/mcts.cpp src/node.cpp src/4T_DATA_impl.cpp -o endgame
 ./endgame
 
+要去 /src/server 測試才讀得到DATA資料
+g++ -std=c++11 -O2 ../gst-endgame.cpp ../ismcts.cpp ../mcts.cpp ../node.cpp ../4T_DATA_impl.cpp -o endgame_merge
+./endgame_merge
 
 ## Code settings
 

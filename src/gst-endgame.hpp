@@ -31,6 +31,8 @@ int nowTurn;
     int history[1000];
     int n_plies;
 
+    int step;
+
 public:
     void init_board();
     void print_board();
@@ -40,7 +42,14 @@ public:
     void undo();
     bool is_over();
     bool is_revealed(int piece) const { return revealed[piece]; }
-    
+
+    bool is_valid_pattern(int base_pos, const int* offset);
+    int get_loc(int base_pos, const int* offset);
+    int get_feature_unknown(int base_pos, const int* offset);
+    float get_weight(int base_pos, const int* offset, DATA&);
+    float compute_board_weight(DATA&);
+    int highest_weight(DATA&);
+
     int get_color(int piece) const { return color[piece]; }
     int get_pos(int piece) const { return pos[piece]; }
     void set_color(int piece, int new_color) { color[piece] = new_color; }

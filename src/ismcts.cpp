@@ -188,7 +188,8 @@ void ISMCTS::expansion(Node *node, const GST &determinizedState) {
     }
 }
 
-double ISMCTS::simulation(GST &state,DATA &d) {
+// double ISMCTS::simulation(GST &state,DATA &d) {
+double ISMCTS::simulation(GST &state) {
     int moves[MAX_MOVES];
     int moveCount;
     GST simState = state;
@@ -202,15 +203,20 @@ double ISMCTS::simulation(GST &state,DATA &d) {
     while (!simState.is_over() && moveCounter < maxMoves) {
         moveCount = simState.gen_all_move(moves);
         if (moveCount == 0) break;
-        int move;
-        if(Turn == USER) {
-            move = simState.highest_weight(d);
-            Turn = ENEMY;
-        } else {
-            int randomIndex = dist(rng) % moveCount;
-            move = moves[randomIndex];
-            Turn = USER;
-        }
+        // int move = simState.highest_weight(d);
+
+        int randomIndex = dist(rng) % moveCount;
+        int move = moves[randomIndex];
+
+        // int move;
+        // if(Turn == USER) {
+        //     move = simState.highest_weight(d);
+        //     Turn = ENEMY;
+        // } else {
+        //     int randomIndex = dist(rng) % moveCount;
+        //     move = moves[randomIndex];
+        //     Turn = USER;
+        // }
         
         simState.do_move(move);
         moveCounter++;
@@ -309,7 +315,8 @@ double ISMCTS::calculateUCB(const Node *node) const {
 // }
 
 int ISMCTS::findBestMove(GST &game, DATA &d) {
-    
+
+// int ISMCTS::findBestMove(GST &game) {  
     // if (game.is_over()) return -1;
 
     Node::cleanup(root);
@@ -352,7 +359,8 @@ int ISMCTS::findBestMove(GST &game, DATA &d) {
 
         // 一定要進行模擬
         GST simulationState = nodeToSimulate->state;
-        int result = simulation(simulationState, d);
+        // int result = simulation(simulationState, d);
+        int result = simulation(simulationState);
 
         // 反向傳播結果
         backpropagation(nodeToSimulate, result);

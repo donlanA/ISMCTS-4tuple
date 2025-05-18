@@ -299,7 +299,7 @@ bool GST::is_over(){    //game end or not => the number of remain chess color
     return false;
 }
 
-int move_index = 0;
+// int move_index = 0;
 
 // int flat_mc(GST& game, int simu_times){
 //     int root_nmove, n_move;

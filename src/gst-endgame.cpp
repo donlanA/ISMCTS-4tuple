@@ -673,9 +673,9 @@ DATA data;
 
 int main(){
     // 為Mac初始化隨機數生成
-    // std::random_device rd;
-    // std::mt19937 gen(std::chrono::system_clock::now().time_since_epoch().count());
-    // std::uniform_int_distribution<> dist(0, 7);
+    std::random_device rd;
+    std::mt19937 gen(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<> dist(0, 7);
     
     GST game;
     

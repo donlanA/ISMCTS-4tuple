@@ -31,6 +31,8 @@ g++ -o Tomorin main.cpp MyAI.cpp ../4T_GST_impl.cpp ../4T_DATA_impl.cpp -std=c++
 
 g++ -o Tomorin_ismcts main.cpp MyAI.cpp ../4T_GST_impl.cpp ../4T_DATA_impl.cpp ../ismcts.cpp ../node.cpp -std=c++11
 
+g++ -o Tomorin_merge main.cpp MyAI.cpp ../4T_GST_impl.cpp ../4T_DATA_impl.cpp ../ismcts.cpp ../node.cpp -std=c++11 -O2
+
 ## Code settings
 ### pieces:
  0   h   g   f   e   0

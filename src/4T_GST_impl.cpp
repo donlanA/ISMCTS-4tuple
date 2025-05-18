@@ -376,10 +376,10 @@ void GST::undo(){   //return to last move(use to return status of random move)
 }
 
 bool GST::is_over(){    //game end or not => the number of remain chess color
-    // if(n_plies >= 200) {
-    //     winner = -2; // -2表示平局
-    //     return true;
-    // }
+    if(n_plies >= 200) {
+        winner = -2; // -2表示平局
+        return true;
+    }
     if(winner != -1) return true;
     else{
         if(piece_nums[0] == 0 || piece_nums[3] == 0){

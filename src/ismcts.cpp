@@ -211,14 +211,24 @@ double ISMCTS::simulation(GST &state,DATA &d) {
         // int move = moves[randomIndex];
 
         int move;
-        if(Turn == USER) {
-            move = simState.highest_weight(d);
+        double epsilon = std::max(0.1, 1.0 - (double)moveCounter / 1000.0);
+        std::uniform_real_distribution<> probDist(0.0, 1.0);
+
+        if (Turn == USER) {
+            double p = probDist(rng);
+            if (p < epsilon) {
+                int randomIndex = dist(rng) % moveCount;
+                move = moves[randomIndex];
+            } else {
+                move = simState.highest_weight(d);
+            }
             Turn = ENEMY;
         } else {
             int randomIndex = dist(rng) % moveCount;
             move = moves[randomIndex];
             Turn = USER;
         }
+
         
         simState.do_move(move);
         moveCounter++;

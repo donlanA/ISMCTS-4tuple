@@ -20,13 +20,13 @@ static const int offset_1x4[4] = {0, 1, 2, 3};
 static const int offset_2x2[4] = {0, 1, 6, 7};
 static const int offset_4x1[4] = {0, 6, 12, 18};
 
+// 設置顏色
 void SetColor(int color = 7){
     #ifdef _WIN32
         HANDLE hConsole;
         hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleTextAttribute(hConsole,color);
     #else
-        // For non-Windows platforms, use ANSI escape codes
         switch(color) {
             case 4: printf("\033[31m"); break;  // RED
             case 9: printf("\033[34m"); break;  // BLUE
@@ -154,8 +154,8 @@ void GST::init_board(){
     return;
 }
 
-
-void GST::print_board(){    //print the board now & print User's remain chess & print eaten Enemy's chess
+// 印出棋盤
+void GST::print_board(){
     for (int i = 0; i < ROW; i++) {
         for (int j = 0; j < COL; j++) {
             if(piece_board[i * ROW + j] != -1) 
@@ -182,16 +182,17 @@ void GST::print_board(){    //print the board now & print User's remain chess & 
     printf("\n");
 }
 
-int GST::gen_move(int* move_arr, int piece, int location, int& count){  //generate the possible step
+// 生成所有合法走步
+int GST::gen_move(int* move_arr, int piece, int location, int& count){
     int row = location / ROW;
     int col = location % COL;
     
     if(nowTurn == USER){
-        if(row != 0 && board[location-6] <= 0) move_arr[count++] = piece << 4;            //up
-        if(row != ROW-1 && board[location+6] <= 0) move_arr[count++] = piece << 4 | 3;    //down
-        if(col != 0 && board[location-1] <= 0) move_arr[count++] = piece << 4 | 1;        //left
-        if(col != COL-1 && board[location+1] <= 0) move_arr[count++] = piece << 4 | 2;    //right
-        if(color[piece] == BLUE){                                                         //exit move  
+        if(row != 0 && board[location-6] <= 0) move_arr[count++] = piece << 4;            // 上
+        if(row != ROW-1 && board[location+6] <= 0) move_arr[count++] = piece << 4 | 3;    // 下
+        if(col != 0 && board[location-1] <= 0) move_arr[count++] = piece << 4 | 1;        // 左
+        if(col != COL-1 && board[location+1] <= 0) move_arr[count++] = piece << 4 | 2;    // 右
+        if(color[piece] == BLUE){                                                         // 逃脫
             if(location == 0) move_arr[count++] = piece << 4 | 1;
             if(location == 5) move_arr[count++] = piece << 4 | 2;
         }
@@ -205,10 +206,11 @@ int GST::gen_move(int* move_arr, int piece, int location, int& count){  //genera
             if(location == 35) move_arr[count++] = piece << 4 | 2;
         }
     }
-    return count;   //the number of possible step
+    return count; 
 }
 
-int GST::gen_all_move(int* move_arr){   //gernerate all posibility of chess step
+// 生成所有合法走步
+int GST::gen_all_move(int* move_arr){
     int count = 0;
     int offset = nowTurn == ENEMY ? PIECES : 0;
     int* nowTurn_pos = pos + offset;
@@ -218,17 +220,18 @@ int GST::gen_all_move(int* move_arr){   //gernerate all posibility of chess step
             gen_move(move_arr, i+offset, nowTurn_pos[i], count);
         }
     }
-
     return count;
 }
 
-bool check_win_move(int location, int dir){     //if chess is in corner, check next move will win or not
+// 檢查是否為逃脫走步
+bool check_win_move(int location, int dir){
     if(location == 0 || location == 30) return dir == 1 ? true : false;
     else if(location == 5 || location == 35) return dir == 2 ? true : false;
     return false;
 }
 
-void GST::do_move(int move){    //move chess
+// 執行走步
+void GST::do_move(int move){
     int piece = move >> 4;
     int direction = move & 0xf;
 
@@ -601,8 +604,6 @@ int GST::highest_weight(DATA& d){
             int assigned_corner = assigned_corner_for_piece[piece];
             int current_dist;
 
-            //printf("piece = %c, assigned_corner = %d\n", print_piece[piece], assigned_corner);
-            
             // 計算當前位置到分配角落的距離
             int p_row = src / 6;
             int p_col = src % 6;
@@ -643,13 +644,14 @@ int GST::highest_weight(DATA& d){
     float max_weight = -1;
     int do_idx = -1, same_idx = 0, SAME[MAX_MOVES] = {0};
 
+    // 找到最大權重的走步
     for(int i = 0; i < root_nmove; i++){
         if(WEIGHT[i] == max_weight){
             SAME[same_idx++] = i;
         }
         else if(WEIGHT[i] > max_weight){
             max_weight = WEIGHT[i];
-            do_idx = i;           //which step we decided to move finally
+            do_idx = i;
             SAME[0] = i;
             same_idx = 1;
         }
@@ -663,12 +665,10 @@ int GST::highest_weight(DATA& d){
         int x = rng(same_idx - 1);
         do_idx = SAME[x];
     }
-    // printf("return: %d\n", root_moves[do_idx]);
 
     return root_moves[do_idx];
 }
 
-// int move_index = 0;
 DATA data;
 
 int main(){
@@ -733,8 +733,6 @@ int main(){
         printf("遊戲結束！達到20回合，判定為平局！\n");
     } else {
         printf("遊戲結束！%s 獲勝！\n", winner ? "Player 2 (MCTS)" : "Player 1 (ISMCTS)");
-        
-        // 顯示勝利原因
         if(game.is_escape) {
             printf("勝利方式：藍色棋子成功逃脫！\n");
         } else if(game.piece_nums[0] == 0) {

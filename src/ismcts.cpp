@@ -200,7 +200,8 @@ double ISMCTS::simulation(GST &state,DATA &d) {
 
     int maxMoves = 1000;
     int moveCounter = 0;
-    int Turn = USER;
+    int Turn = ENEMY; // 根據深度決定先手 +1 表示從 expansion 節點開始模擬
+    int starter = Turn;
 
     while (!simState.is_over() && moveCounter < maxMoves) {
         moveCount = simState.gen_all_move(moves);
@@ -211,24 +212,14 @@ double ISMCTS::simulation(GST &state,DATA &d) {
         // int move = moves[randomIndex];
 
         int move;
-        double epsilon = std::max(0.1, 1.0 - (double)moveCounter / 1000.0);
-        std::uniform_real_distribution<> probDist(0.0, 1.0);
-
-        if (Turn == USER) {
-            double p = probDist(rng);
-            if (p < epsilon) {
-                int randomIndex = dist(rng) % moveCount;
-                move = moves[randomIndex];
-            } else {
-                move = simState.highest_weight(d);
-            }
+        if(Turn == USER) {
+            move = simState.highest_weight(d);
             Turn = ENEMY;
         } else {
             int randomIndex = dist(rng) % moveCount;
             move = moves[randomIndex];
             Turn = USER;
         }
-
         
         simState.do_move(move);
         moveCounter++;
@@ -244,10 +235,11 @@ double ISMCTS::simulation(GST &state,DATA &d) {
 
 void ISMCTS::backpropagation(Node *node, double result)
 {
-    while (node != nullptr)
-    {
+    result = -result;
+    while (node != nullptr) {
         node->visits++;
-        node->wins += result;
+        node->wins += result ;
+        result = -result;  // 在每一層交替結果
         node = node->parent;
     }
 }
@@ -339,7 +331,7 @@ int ISMCTS::findBestMove(GST &game, DATA &d) {
 
         // 選擇階段
         selection(currentNode, determinizedState);
-
+        
         // std::vector<int> path;
         // Node* node = currentNode;
         // while (node && node->parent != nullptr) {

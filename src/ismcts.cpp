@@ -200,7 +200,7 @@ double ISMCTS::simulation(GST &state,DATA &d) {
 
     int maxMoves = 1000;
     int moveCounter = 0;
-    int Turn = ENEMY; // 根據深度決定先手 +1 表示從 expansion 節點開始模擬
+    int Turn = ENEMY; 
     int starter = Turn;
 
     while (!simState.is_over() && moveCounter < maxMoves) {
@@ -235,7 +235,6 @@ double ISMCTS::simulation(GST &state,DATA &d) {
 
 void ISMCTS::backpropagation(Node *node, double result)
 {
-    result = -result;
     while (node != nullptr) {
         node->visits++;
         node->wins += result ;

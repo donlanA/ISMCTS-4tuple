@@ -27,15 +27,17 @@ W: west
 S: south
 
 ## Compile
+### 只有4-tuple的玩家
 g++ -o Tomorin main.cpp MyAI.cpp ../4T_GST_impl.cpp ../4T_DATA_impl.cpp ../ismcts.cpp ../node.cpp -std=c++11
 
+### 只有ismcts的玩家
 g++ -o Tomorin_ismcts main.cpp MyAI.cpp ../4T_GST_impl.cpp ../4T_DATA_impl.cpp ../ismcts.cpp ../node.cpp -std=c++11
 
+### 合併4-tuple與ismcts的玩家
 g++ -o Tomorin_merge main.cpp MyAI.cpp ../4T_GST_impl.cpp ../4T_DATA_impl.cpp ../ismcts.cpp ../node.cpp -std=c++11 -O2
 
 ## Code settings
 ### pieces:
- 0   h   g   f   e   0
  0   d   c   b   a   0
  0   0   0   0   0   0
  0   0   0   0   0   0

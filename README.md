@@ -110,3 +110,8 @@ color board: |1|:red |2|:blue
  -   A   B   C   D   -
  -   E   F   G   H   -
 ```
+
+
+### 論文
+
+[ISMCTS](https://eprints.whiterose.ac.uk/id/eprint/75048/1/CowlingPowleyWhitehouse2012.pdf)

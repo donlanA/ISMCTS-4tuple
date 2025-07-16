@@ -1,14 +1,21 @@
 #include "ismcts.hpp"
 
+// ISMCTS 演算法的方向值常數
 constexpr int ISMCTS::dir_val[4];
 
-// ISMCTS 實現
+// =============================
+// ISMCTS 類別建構子
+// =============================
+// 初始化模擬次數與隨機種子
 ISMCTS::ISMCTS(int simulations) : simulations(simulations) {
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     rng.seed(static_cast<unsigned int>(seed));
 }
 
+// =============================
 // 重置 ISMCTS 狀態
+// =============================
+// 重新設定隨機種子、清理根節點與排列統計
 void ISMCTS::reset() {
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     rng.seed(static_cast<unsigned int>(seed));
@@ -17,7 +24,10 @@ void ISMCTS::reset() {
     arrangement_stats.clear();
 }
 
-// 獲取確定化狀態
+// =============================
+// 取得確定化狀態
+// =============================
+// 根據原始狀態與目前迭代，隨機化未知棋子顏色
 GST ISMCTS::getDeterminizedState(const GST &originalState, int current_iteration) {
     
     GST determinizedState = originalState;
@@ -26,7 +36,10 @@ GST ISMCTS::getDeterminizedState(const GST &originalState, int current_iteration
     return determinizedState;
 }
 
+// =============================
 // 隨機化未知顏色的棋子
+// =============================
+// 早期純隨機，後期根據統計加權
 void ISMCTS::randomizeUnrevealedPieces(GST& state, int current_iteration) {
     const bool* revealed = state.get_revealed();
     std::vector<int> unrevealed_pieces;
@@ -49,6 +62,7 @@ void ISMCTS::randomizeUnrevealedPieces(GST& state, int current_iteration) {
 
     if (unrevealed_pieces.empty()) return;
 
+    // 後期才用統計資訊
     bool use_stats = (current_iteration >= simulations / 2);
 
     if (!use_stats) {
@@ -137,7 +151,10 @@ void ISMCTS::randomizeUnrevealedPieces(GST& state, int current_iteration) {
     }
 }
 
+// =============================
 // 選擇階段
+// =============================
+// 根據 UCB 選擇最佳子節點
 void ISMCTS::selection(Node*& node, GST& determinizedState) {
     while (!node->state.is_over() && !node->children.empty()) {
         Node* bestChild = nullptr;
@@ -166,7 +183,10 @@ void ISMCTS::selection(Node*& node, GST& determinizedState) {
     }
 }
 
+// =============================
 // 擴展階段
+// =============================
+// 對未結束節點產生所有合法子節點
 void ISMCTS::expansion(Node *node, const GST &determinizedState) {
     if (node->state.is_over()) return;
 
@@ -194,7 +214,13 @@ void ISMCTS::expansion(Node *node, const GST &determinizedState) {
     }
 }
 
+// =============================
 // 模擬階段
+// =============================
+// 隨機模擬遊戲直到結束，回傳勝負
+// USER 端用 epsilon-greedy，ENEMY 隨機
+// d: 資料物件，影響權重
+// =============================
 double ISMCTS::simulation(GST &state,DATA &d) {
     int moves[MAX_MOVES];
     int moveCount;
@@ -238,6 +264,7 @@ double ISMCTS::simulation(GST &state,DATA &d) {
         moveCounter++;
     }
 
+    // 若超過最大步數仍未結束，視為失敗
     if (!simState.is_over() && moveCounter >= maxMoves)
         return 0;
 
@@ -246,10 +273,12 @@ double ISMCTS::simulation(GST &state,DATA &d) {
     return winner;
 }
 
-// 反向傳播結果
-void ISMCTS::backpropagation(Node *node, double result)
-{
-    while (node != nullptr) {
+// =============================
+// 反向傳播階段
+// =============================
+// 將模擬結果回傳至路徑上的所有節點
+void ISMCTS::backpropagation(Node *node, double result) {
+    while (node != nullptr){
         node->visits++;
         node->wins += result ;
         result = -result;  // 在每一層交替結果
@@ -257,7 +286,12 @@ void ISMCTS::backpropagation(Node *node, double result)
     }
 }
 
+// =============================
 // 計算 UCB 值
+// =============================
+// UCB = 勝率 + 探索項
+// 若未訪問則回傳無窮大
+// =============================
 double ISMCTS::calculateUCB(const Node *node) const {
     if (node->visits == 0) return std::numeric_limits<double>::infinity();
     
@@ -268,7 +302,10 @@ double ISMCTS::calculateUCB(const Node *node) const {
     return winRate + exploration;
 }
 
-// 尋找最佳移動(AI主程式)
+// =============================
+// 尋找最佳移動 (AI主程式)
+// =============================
+// 進行多次模擬，選出訪問次數最多的子節點
 int ISMCTS::findBestMove(GST &game, DATA &d) {
     Node::cleanup(root);
     root.reset(new Node(game));

@@ -1,7 +1,7 @@
 #include "../4T_header.h"
 #include "MyAI.h"
 #include "../ismcts.hpp"
-
+// 連線server主程式
 DATA data;
 GST game;
 ISMCTS ismcts(10000);

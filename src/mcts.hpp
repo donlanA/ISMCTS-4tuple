@@ -1,7 +1,7 @@
 #ifndef MCTS_HPP
 #define MCTS_HPP
 
-#include "gst.hpp"
+#include "4T_GST.hpp"
 #include "node.hpp"
 #include <vector>
 #include <memory>
@@ -12,7 +12,7 @@ class MCTS {
 private:
     int simulations;
     std::mt19937 rng;
-    std::unique_ptr<Node> root; // 添加根節點成員
+    std::unique_ptr<Node> root;
 
     void selection(Node*& node);
     void expansion(Node* node);
@@ -26,7 +26,7 @@ private:
 
 public:
     explicit MCTS(int simulations);
-    void reset();  // 添加 reset 方法
+    void reset();
     int findBestMove(GST& game);
 };
 

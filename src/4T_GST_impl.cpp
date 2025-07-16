@@ -1,4 +1,6 @@
 #include "4T_header.h"
+#include "ismcts.hpp"
+#include "mcts.hpp"
 
 static std::map<char, int> piece_index = {
     {'A', 0}, {'B', 1}, {'C', 2}, {'D', 3}, {'E', 4}, {'F', 5}, {'G', 6}, {'H', 7},
@@ -17,18 +19,18 @@ static const int offset_2x2[4] = {0, 1, 6, 7};
 static const int offset_4x1[4] = {0, 6, 12, 18};
 
 void SetColor(int color = 7){
-#ifdef _WIN32
-    HANDLE hConsole;
-    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hConsole,color);
-#else
-    // For non-Windows platforms, use ANSI escape codes
-    switch(color) {
-        case 4: printf("\033[31m"); break;  // RED
-        case 9: printf("\033[34m"); break;  // BLUE
-        default: printf("\033[0m"); break;  // Reset to default
-    }
-#endif
+    #ifdef _WIN32
+        HANDLE hConsole;
+        hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTextAttribute(hConsole,color);
+    #else
+        // For non-Windows platforms, use ANSI escape codes
+        switch(color) {
+            case 4: printf("\033[31m"); break;  // RED
+            case 9: printf("\033[34m"); break;  // BLUE
+            default: printf("\033[0m"); break;  // Reset to default
+        }
+    #endif
 }
 
 void GST::set_board(char* position){        //for server
@@ -37,6 +39,8 @@ void GST::set_board(char* position){        //for server
     memset(revealed, false, sizeof(revealed));
     for(int i = 0; i < ROW * COL; i++) piece_board[i] = -1;
     for(int i = 0; i < 4; i++) piece_nums[i] = 4;
+
+
     nowTurn = USER;
     winner = -1;
     for(int i=0; i<PIECES; i++) {//預設自己的都可看到
@@ -51,7 +55,7 @@ void GST::set_board(char* position){        //for server
 
         if(x == '9' && y == '9'){
             pos[i] = -1;    //被吃掉
-
+            revealed[i] = true;
             if(i < PIECES){
                 if(c == 'r'){
                     color[i] = RED;
@@ -80,9 +84,11 @@ void GST::set_board(char* position){        //for server
             if(i < PIECES) {     //User
                 if(c == 'R') color[i] = RED;
                 else if(c == 'B') color[i] = BLUE;
+                revealed[i] = true;
             }
             else{       //Enemy
                 if(c == 'u') color[i] = -UNKNOWN;      //未知的棋
+                revealed[i] = false;
             }
             
             // 更新棋盤
@@ -96,7 +102,8 @@ void GST::set_board(char* position){        //for server
     return;
 }
 
-void GST::init_board(){ //initialize data
+//initialize data
+void GST::init_board(){
     auto now = std::chrono::system_clock::now();
     auto now_as_duration = now.time_since_epoch();
     auto now_as_microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now_as_duration).count();
@@ -110,6 +117,7 @@ void GST::init_board(){ //initialize data
 
     memset(board, 0, sizeof(board));
     memset(pos, 0, sizeof(pos));
+    memset(revealed, false, sizeof(revealed));
     for(int i=0; i<ROW*COL; i++) piece_board[i] = -1;
     for(int i=0; i<4; i++) piece_nums[i] = 4;
     for(int i=0; i<PIECES; i++) {   //set color
@@ -163,12 +171,12 @@ void GST::init_board(){ //initialize data
         offset+=8;
     }
 
-    for (int i = 0; i < 201; i++) {
-        for (int j = 0; j < ROW * COL + 1; j++) {
-            color_his_U[i][j] = 0;
-            color_his_E[i][j] = 0;
-        }
-    }
+    // for (int i = 0; i < 201; i++) {
+    //     for (int j = 0; j < ROW * COL + 1; j++) {
+    //         color_his_U[i][j] = 0;
+    //         color_his_E[i][j] = 0;
+    //     }
+    // }
     step = 0;
 
     return;
@@ -204,7 +212,7 @@ void GST::print_board(){    //print the board now & print User's remain chess & 
     //     printf("%d ", board[i]);
     //     if(i % 6 == 5) printf("\n");
     // }
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');     //???enter???繼�??
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 int GST::gen_move(int* move_arr, int piece, int location, int& count){  //generate the possible step
@@ -282,6 +290,9 @@ void GST::do_move(int move){    //move chess
         else if(color[piece_board[dst]] == -BLUE) piece_nums[3] -= 1;
         else if(color[piece_board[dst]] == -UNKNOWN){}  //先什麼都不做
         else{
+            fprintf(stderr, "piece: %d, direction: %d\n", piece, direction);
+            fprintf(stderr, "pos[piece]: %d, dir_val[direction]: %d\n", pos[piece], dir_val[direction]);
+            fprintf(stderr, "color[piece_board[dst]]: %d, piece_board[dst]: %d\n", color[piece_board[dst]], piece_board[dst]);
             fprintf(stderr, "do_move error, eaten color wrong!\n");
             exit(1);
         } 
@@ -294,6 +305,9 @@ void GST::do_move(int move){    //move chess
         else if(color[piece_board[dst]] == BLUE) piece_nums[1] -= 1;
         else if(color[piece_board[dst]] == UNKNOWN){}  //先什麼都不做
         else{
+            fprintf(stderr, "piece: %d, direction: %d\n", piece, direction);
+            fprintf(stderr, "pos[piece]: %d, dir_val[direction]: %d\n", pos[piece], dir_val[direction]);
+            fprintf(stderr, "color[piece_board[dst]]: %d, piece_board[dst]: %d\n", color[piece_board[dst]], piece_board[dst]);
             fprintf(stderr, "do_move error, eaten color wrong!\n");
             exit(1);
         }
@@ -302,11 +316,11 @@ void GST::do_move(int move){    //move chess
         move |= 0x1000;
     }
 
-    board[pos[piece]] = 0;  //set 0 at the location which stay before => space: color = 0
+    board[pos[piece]] = 0;          //set 0 at the location which stay before => space: color = 0
     piece_board[pos[piece]] = -1;   //set 0 at the location which stay before => space: no chess
-    board[dst] = color[piece];  //color the chess color at the location after move
-    piece_board[dst] = piece;   //set chess number at the location after move
-    pos[piece] = dst;   //the location of chess now
+    board[dst] = color[piece];      //color the chess color at the location after move
+    piece_board[dst] = piece;       //set chess number at the location after move
+    pos[piece] = dst;               //the location of chess now
     history[n_plies++] = move;
     nowTurn ^= 1; //change player
 }
@@ -364,6 +378,10 @@ void GST::undo(){   //return to last move(use to return status of random move)
 }
 
 bool GST::is_over(){    //game end or not => the number of remain chess color
+    if(n_plies >= 200) {
+        winner = -2; // -2表示平局
+        return true;
+    }
     if(winner != -1) return true;
     else{
         if(piece_nums[0] == 0 || piece_nums[3] == 0){
@@ -377,80 +395,6 @@ bool GST::is_over(){    //game end or not => the number of remain chess color
     }
     return false;
 }
-
-// void GST::record_board(){
-//     //board color data for 2-tuple
-//     int chess;
-//     if(nowTurn^1 == ENEMY){     //Enemy剛動完，nowTurn要校正回歸
-//         for (int i = 0; i < ROW * COL; i++) {
-//             if(piece_board[i] != -1){                                 //have chess
-//                 if(color[piece_board[i]] == -RED) chess = 1;
-//                 else if(color[piece_board[i]] == -BLUE) chess = 2;
-//                 else if(color[piece_board[i]] == RED || color[piece_board[i]] == BLUE) chess = 3;
-//             }
-//             else{                       //no chess
-//                 chess = 0;
-//             }
-//             color_his_E[(step - 1) / 2][i] = chess;     //都不記錄初始盤面
-//             color_his_E[(step - 1) / 2][36] = piece_nums[0]*4 + piece_nums[3];     //U R = 1 && E B = 1 => 5
-//         }
-//     }
-//     else if(nowTurn^1 == USER){     //User剛動完，nowTurn要校正回歸
-//         for (int i = 0; i < ROW * COL; i++) {
-//             if(piece_board[i] != -1){                                 //have chess
-//                 if(color[piece_board[i]] == RED) chess = 1;
-//                 else if(color[piece_board[i]] == BLUE) chess = 2;
-//                 else if(color[piece_board[i]] == -RED || color[piece_board[i]] == -BLUE) chess = 3;
-//             }
-//             else{                       //no chess
-//                 chess = 0;
-//             }
-//             color_his_U[(step - 1) / 2][i] = chess;
-//             color_his_U[(step - 1) / 2][36] = piece_nums[2]*4 + piece_nums[1];  // E R = 1 && U B = 1 => 5
-//         }
-//     }
-//     //all board data for game history
-//     long long encode = 0;
-//     for(int i = 0; i < PIECES; i++){        //user
-//         int position = pos[i] + 1;
-//         encode = (encode << 6) | position;
-//     }
-//     game_his[step][USER] = encode;
-//     encode = 0;
-//     for(int i = PIECES; i < PIECES * 2; i++){       //enmey
-//         int position = pos[i] + 1;
-//         encode = (encode << 6) | position;
-//     }
-//     game_his[step][ENEMY] = encode;
-//     step++;
-// }
-
-// void GST::show_color_his(int WHO){        //feature
-//     printf("who = %s\n", WHO ? "Enemy" : "User");
-//     printf("total step = %d\n", step);
-//     for(int i = 0; i <= (step - 1) / 2; i++){
-//         printf("(step - 1) / 2 = %d | ", i);
-//         for(int j = 0; j < ROW * COL; j++){
-//             if(WHO == USER) printf("%d ", color_his_U[i][j]);
-//             else printf("%d ", color_his_E[i][j]);
-//         }
-//         printf("\n");
-//     }
-// }
-
-// void GST::show_game_his(){       //棋譜
-//     printf("total step = %d\n", step);
-//     printf("color | ");
-//     for(int i = 0; i < PIECES * 2; i++){
-//         printf("%d ", color[i]);
-//     }
-//     printf("\n");
-//     printf("winner | %d\n", winner);
-//     for(int i = 0; i < step; i++){
-//         printf("step = %d | ", i);
-//         printf("%lld %lld\n", game_his[i][USER], game_his[i][ENEMY]);
-//     }
-// }
 
 // Helper function to check if a pattern is valid given base position
 bool GST::is_valid_pattern(int base_pos, const int* offset){
@@ -478,15 +422,6 @@ int GST::get_loc(int base_pos, const int* offset){
     return (position[0] * 36 * 36 * 36 + position[1] * 36 * 36 + position[2] * 36 + position[3]);
 }
 
-int GST::get_feature(int base_pos, const int* offset, int step_idx, int who){          // the piece color
-    int features[4];
-    for(int i = 0; i < 4; i++){
-        if(who == ENEMY) features[i] = color_his_E[step_idx][base_pos + offset[i]];
-        if(who == USER) features[i] = color_his_U[step_idx][base_pos + offset[i]];
-    }
-    return (features[0] * 64 + features[1] * 16 + features[2] * 4 + features[3]);
-}
-
 int GST::get_feature_unknown(int base_pos, const int* offset){           // the piece color
     int features[4];
     for(int i = 0; i < 4; i++){
@@ -500,80 +435,6 @@ int GST::get_feature_unknown(int base_pos, const int* offset){           // the 
     }
     return (features[0] * 64 + features[1] * 16 + features[2] * 4 + features[3]);
 }
-
-void GST::update_tuple_trans(int step_idx, int base_pos, const int* offset, int now_win, int U, int E, DATA& d, int piece_step[4]){
-    int loc = get_loc(base_pos, offset);
-    // piece_step[4] = {U red, U blue, E red, E blue};
-    if(E == 0 && U == 0) return;
-    if(U > 0){
-        int color_U = get_feature(base_pos, offset, step_idx, USER);
-        int LUT_idx_U = d.LUT_idx(d.trans[loc], color_U);
-        
-        if(step_idx >= piece_step[2]){   // E's Red = 1
-            d.LUTv_U_R1[LUT_idx_U] += 2;
-            if(now_win == USER) d.LUTw_U_R1[LUT_idx_U] += 2;
-            else if(now_win == -1) d.LUTw_U_R1[LUT_idx_U] += 1;      //tie
-        }else if(step_idx >= piece_step[1]){ // U's Blue = 1
-            d.LUTv_U_B1[LUT_idx_U] += 2;
-            if(now_win == USER) d.LUTw_U_B1[LUT_idx_U] += 2;
-            else if(now_win == -1) d.LUTw_U_B1[LUT_idx_U] += 1;      //tie
-        }else{
-            d.LUTv_U[LUT_idx_U] += 2;
-            if(now_win == USER) d.LUTw_U[LUT_idx_U] += 2;
-            else if(now_win == -1) d.LUTw_U[LUT_idx_U] += 1;      //tie
-        }
-    }
-    if(E > 0){
-        int color_E = get_feature(base_pos, offset, step_idx, ENEMY);
-        int LUT_idx_E = d.LUT_idx(d.trans[loc], color_E);
-        
-        if(step_idx >= piece_step[0]){   // U's Red = 1
-            d.LUTv_E_R1[LUT_idx_E] += 2;         //visit: +2
-            if(now_win == ENEMY) d.LUTw_E_R1[LUT_idx_E] += 2;
-            else if(now_win == -1) d.LUTw_E_R1[LUT_idx_E] += 1;      //tie
-        }else if(step_idx >= piece_step[3]){ // E's Blue = 1
-            d.LUTv_E_B1[LUT_idx_E] += 2;         //visit: +2
-            if(now_win == ENEMY) d.LUTw_E_B1[LUT_idx_E] += 2;
-            else if(now_win == -1) d.LUTw_E_B1[LUT_idx_E] += 1;      //tie
-        }else{
-            d.LUTv_E[LUT_idx_E] += 2;         //visit: +2
-            if(now_win == ENEMY) d.LUTw_E[LUT_idx_E] += 2;
-            else if(now_win == -1) d.LUTw_E[LUT_idx_E] += 1;      //tie
-        }
-    }
-    
-}
-
-// void GST::update_tuple(int now_win, DATA& d){    // scan feature
-//     // 0 space / 1 red / 2 blue / 3 enemy
-//     int piece_step[4] = {201, 201, 201, 201}; // 0:U R, 1:U B, 2:E R, 3:E B
-//     for(int i = 0; i < (step - 1) / 2; i++){
-//         if(color_his_E[i][36] / 4 == 1){ piece_step[0] = i; }    //color_his_E: U R = 1
-//         if(color_his_E[i][36] % 4 == 1){ piece_step[3] = i; }    //color_his_E: E B = 1
-//         if(color_his_U[i][36] / 4 == 1){ piece_step[2] = i; }    //color_his_U: E R = 1
-//         if(color_his_U[i][36] % 4 == 1){ piece_step[1] = i; }    //color_his_U: U B = 1
-//     }
-//     for(int i = 0; i <= (step - 1) / 2; i++) {
-//         int U = 1, E = 1;   //能不能更新
-//         if(i == (step - 1) / 2){
-//             U = 0;
-//             E = 0;
-//             for(int j = 0; j < ROW * COL; j++) U += color_his_U[i][j];
-//             for(int j = 0; j < ROW * COL; j++) E += color_his_E[i][j];
-//         }
-//         for(int pos = 0; pos < ROW * COL; pos++){
-//             if(is_valid_pattern(pos, offset_1x4)){
-//                 update_tuple_trans(i, pos, offset_1x4, now_win, U, E, d, piece_step);
-//             }
-//             if(is_valid_pattern(pos, offset_4x1)){
-//                 update_tuple_trans(i, pos, offset_4x1, now_win, U, E, d, piece_step);
-//             }
-//             if(is_valid_pattern(pos, offset_2x2)){
-//                 update_tuple_trans(i, pos, offset_2x2, now_win, U, E, d, piece_step);
-//             }
-//         }
-//     }
-// }
 
 float GST::get_weight(int base_pos, const int* offset, DATA& d){
     int feature = get_feature_unknown(base_pos, offset);
@@ -835,58 +696,7 @@ int GST::highest_weight(DATA& d){
         int x = rng(same_idx - 1);
         do_idx = SAME[x];
     }
-    // printf("do move = %d\n", do_idx);
+    // printf("return: %d\n", root_moves[do_idx]);
 
     return root_moves[do_idx];
 }
-
-// void GST::write_history_file(int run){          //open file & write file        //棋譜
-//     if (_mkdir("history") != 0) {
-//         //new file
-//     }
-//     std::ofstream history;
-//     std::string filename = "history/game_" + std::to_string(run) + ".txt";
-//     history.open(filename, std::ios::out | std::ios::trunc);
-//     int Ucolor = 0, Ecolor = 0;
-//     for(int i = 0; i < PIECES; i++){        //binary
-//         Ucolor = (Ucolor << 1) + (color[i] - 1);
-//         Ecolor = (Ecolor << 1) + (abs(color[i+8]) - 1);
-//     }
-//     history << Ucolor << " " << Ecolor << std::endl;
-//     history << winner << std::endl;
-//     for(int i = 0; i < step; i++){
-//         history << i << " ";
-//         history << game_his[i][USER] << " " << game_his[i][ENEMY];
-//         history << std::endl;
-//     }
-//     history.close();
-// }
-
-// void GST::guess_board(int player){
-//     auto now = std::chrono::system_clock::now();
-//     auto now_as_duration = now.time_since_epoch();
-//     auto now_as_microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now_as_duration).count();
-//     pcg32 rng(now_as_microseconds);
-//     // random set red pieces
-//     int r = (player == USER) ? piece_nums[0] : piece_nums[2];
-//     int offset = (player == USER) ? 0 : 8;
-//     int minus = (player == USER) ? 1 : -1;
-//     int red_num = 0;        // 現在有幾個紅棋
-//     bool red_or_not[8];     // 哪個位置已經是紅棋了
-//     std::fill(std::begin(red_or_not), std::end(red_or_not), false);
-//     char red[4];
-//     while(red_num != r){
-//         int x = rng(8) + offset;
-//         if(!red_or_not[x] && pos[x] != -1){
-//             red[red_num] = print_piece[x];
-//             red_or_not[x] = true;
-//             red_num += 1;
-//         }
-//     }
-//     for(int i = 0; i < 8; i++){
-//         color[i+offset] = BLUE * minus;
-//     }
-//     for(int i = 0; i < r; i++){
-//         color[piece_index[red[i]]] = RED * minus;
-//     }
-// }

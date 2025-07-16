@@ -1,7 +1,7 @@
 #define ROW 6
 #define COL 6
 #define PIECES 8
-#define MAX_PLIES 200
+#define MAX_PLIES 1000
 #define MAX_MOVES 32
 
 #define RED 1
@@ -30,17 +30,21 @@
 #include <chrono>
 #include <random>
 #include <time.h>
-#ifdef _WIN32
-    #include <direct.h>  // Windows directory handling
-#else
-    #include <sys/stat.h>  // POSIX directory handling (for Mac/Linux)
-#endif
 #include <algorithm>
+#include <iomanip>
+#include <limits>
+#include <cassert>
+#include <memory>
+#include <cmath>
+#include <unordered_map>
+
 #ifdef _WIN32
     #include <windows.h>
+    #include <direct.h>
 #elif defined(__APPLE__)
-    #include <mach/mach_time.h>  // For timing functions
-    // Add other macOS-specific headers as needed
+    #include <mach/mach_time.h>
+    #include <unistd.h>
+    #include <sys/stat.h>
 #endif
 
 #include "pcg_random.hpp"

@@ -1,10 +1,12 @@
 #include "../4T_header.h"
 #include "../ismcts.hpp"
 #include "MyAI.h"
+#include "../ismcts.hpp"
 
 DATA data;
 GST game;
-ISMCTS ismcts(5000);
+ISMCTS ismcts(10000);
+
 MyAI::MyAI(void){
     data.init_data();
     data.read_data_file(500000);
@@ -166,6 +168,8 @@ void MyAI::Generate_move(char* move)
 {
     // int best_move = ismcts.findBestMove(game,data);
     int best_move = game.highest_weight(data);
+
+    // int best_move = ismcts.findBestMove(game, data);
     
     int piece = best_move >> 4;
     int direction = best_move & 0xf;
@@ -184,4 +188,5 @@ void MyAI::Generate_move(char* move)
     snprintf(move, 50, "%c,%s", piece_char, dir_str);
     
     game.do_move(best_move);
+
 }

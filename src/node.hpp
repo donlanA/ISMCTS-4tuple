@@ -1,5 +1,6 @@
 #ifndef NODE_HPP
 #define NODE_HPP
+#include "4T_GST.hpp"
 
 #include "4T_GST.hpp"
 #include <vector>
@@ -18,13 +19,13 @@ public:
 
     static void cleanup(std::unique_ptr<Node>& node) {
         if (node) {
-            // 先遞歸清理所有子節點
+            // 遞迴清理子節點
             for (auto& child : node->children) {
                 cleanup(child);
             }
-            // 清空子節點列表
+            // 清理當前節點
             node->children.clear();
-            // 最後重置根節點
+            // 重置根節點
             node.reset();
         }
     }

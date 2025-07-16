@@ -43,7 +43,9 @@ void GST::set_board(char* position){        //for server
 
     nowTurn = USER;
     winner = -1;
-
+    for(int i=0; i<PIECES; i++) {//預設自己的都可看到
+        revealed[i] = true;
+    }
     // Server傳過來的訊息格式：MOV?10B24B34B99b15R25R35R99r45u31u21u99r40u30u20u99b
     for(int i = 0; i < PIECES * 2; i++){
         int index = i * 3;

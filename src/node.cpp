@@ -1,6 +1,6 @@
 #include "node.hpp"
 
-// Node implementation
+// Node 實現
 Node::Node(GST state, int move) : 
     state(state), 
     move(move), 

@@ -36,6 +36,8 @@ g++ -o Tomorin_ismcts main.cpp MyAI.cpp ../4T_GST_impl.cpp ../4T_DATA_impl.cpp .
 ### 合併4-tuple與ismcts的玩家
 g++ -o Tomorin_merge main.cpp MyAI.cpp ../4T_GST_impl.cpp ../4T_DATA_impl.cpp ../ismcts.cpp ../node.cpp -std=c++11 -O2
 
+
+g++ -o Tomorin_ismcts main.cpp MyAI.cpp  ../4T_GST_impl.cpp ../4T_DATA_impl.cpp ../node.cpp ../ismcts.cpp -std=c++11
 ## Code settings
 ### pieces:
  0   d   c   b   a   0
@@ -91,3 +93,6 @@ color board: |1|:red |2|:blue
  -   -   -   -   -   -
  -   A   B   C   D   -
  <   E   F   G   H   >
+
+處理重複定義include或是依賴問題
+不確定要不要加複製建構子

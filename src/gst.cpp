@@ -16,6 +16,8 @@ static std::map<int, char> print_piece = {
 static const int init_pos[2][PIECES] = {{25,26,27,28,31,32,33,34}, {10,9,8,7,4,3,2,1}};
 static const int dir_val[4] = {-COL, -1, 1, COL};
 
+DATA data;
+
 //initialize data
 void GST::init_board(){
     // /*

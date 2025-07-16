@@ -8,8 +8,7 @@ class ISMCTS {
 private:
     int simulations;
     std::mt19937 rng;
-    std::unique_ptr<Node> root; // 添加根節點成員
-
+    std::unique_ptr<Node> root;
 
     void selection(Node*& node, GST& determinizedState);
     void expansion(Node* node, const GST& determinizedState);
@@ -20,7 +19,6 @@ private:
     void randomizeUnrevealedPieces(GST& state, int current_iteration);
     std::unordered_map<std::string, std::pair<int, int>> arrangement_stats;
 
-
     // 模擬移動相關的常量
     static constexpr int dir_val[4] = {-6, -1, 1, 6}; // 上、左、右、下
 
@@ -30,5 +28,4 @@ public:
     int findBestMove(GST& game, DATA& d);
     void printNodeStats(const Node* node, int indent = 0) const;
 };
-
 #endif // ISMCTS_HPP

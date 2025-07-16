@@ -2,12 +2,13 @@
 
 constexpr int ISMCTS::dir_val[4];
 
-// ISMCTS實現
+// ISMCTS 實現
 ISMCTS::ISMCTS(int simulations) : simulations(simulations) {
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     rng.seed(static_cast<unsigned int>(seed));
 }
 
+// 重置 ISMCTS 狀態
 void ISMCTS::reset() {
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     rng.seed(static_cast<unsigned int>(seed));
@@ -16,9 +17,8 @@ void ISMCTS::reset() {
     arrangement_stats.clear();
 }
 
-// 隨機化敵方棋子顏色 (只要棋子還活著就重新隨機化，但保留已知信息)
-GST ISMCTS::getDeterminizedState(const GST &originalState, int current_iteration) 
-{
+// 獲取確定化狀態
+GST ISMCTS::getDeterminizedState(const GST &originalState, int current_iteration) {
     
     GST determinizedState = originalState;
     randomizeUnrevealedPieces(determinizedState, current_iteration);
@@ -26,13 +26,13 @@ GST ISMCTS::getDeterminizedState(const GST &originalState, int current_iteration
     return determinizedState;
 }
 
-// 隨機化未揭露的敵方棋子
+// 隨機化未知顏色的棋子
 void ISMCTS::randomizeUnrevealedPieces(GST& state, int current_iteration) {
     const bool* revealed = state.get_revealed();
     std::vector<int> unrevealed_pieces;
     int redCount = 0, blueCount = 0;
     
-    // 收集未揭露棋子
+    // 統計已揭示的紅藍棋子數量，並收集未知顏色的棋子
     for (int i = PIECES; i < PIECES*2; i++) {
         if (revealed[i]) {
             if (state.get_color(i) == -RED) redCount++;
@@ -130,22 +130,26 @@ void ISMCTS::randomizeUnrevealedPieces(GST& state, int current_iteration) {
             break;
         }
     }
-
+    // 更新 arrangement_stats
     const auto& selected_arrangement = arrangements[selected_idx];
     for (size_t i = 0; i < unrevealed_pieces.size(); i++) {
         state.set_color(unrevealed_pieces[i], selected_arrangement[i]);
     }
 }
 
+
+
+// 選擇階段
 void ISMCTS::selection(Node*& node, GST& determinizedState) {
     while (!node->state.is_over() && !node->children.empty()) {
         Node* bestChild = nullptr;
         double bestUCB = -std::numeric_limits<double>::infinity();
-        
+
+        // 在確定化狀態上選擇最佳子節點
         for (auto& child : node->children) {
             if (child->visits == 0) {
                 node = child.get();
-                determinizedState.do_move(node->move);  // 更新確定化狀態
+                determinizedState.do_move(node->move);
                 return;
             }
             double ucb = calculateUCB(child.get());
@@ -154,32 +158,33 @@ void ISMCTS::selection(Node*& node, GST& determinizedState) {
                 bestChild = child.get();
             }
         }
-
+        
         if (bestChild) {
+            // 更新節點和確定化狀態
             node = bestChild;
-            determinizedState.do_move(node->move);  // 一路跟著選擇走
-        } else {
-            break;
-        }
+            determinizedState.do_move(node->move);
+        } else break;
+        
     }
 }
 
+// 擴展階段
 void ISMCTS::expansion(Node *node, const GST &determinizedState) {
     if (node->state.is_over()) return;
 
-    // 確保我們使用確定性狀態進行擴展
+    // 在確定化狀態上生成所有合法移動
     GST nodeState = determinizedState;
 
     int moves[MAX_MOVES];
     int moveCount = nodeState.gen_all_move(moves);
 
-    for (int i = 0; i < moveCount; i++)
-    {
+    for (int i = 0; i < moveCount; i++) {
         int move = moves[i];
         int piece = move >> 4;
 
         if (piece >= PIECES) continue;
 
+        // 確保移動的棋子在合法範圍內
         int dir = move & 0xf;
         int dst = nodeState.get_pos(piece) + dir_val[dir];
 
@@ -191,6 +196,7 @@ void ISMCTS::expansion(Node *node, const GST &determinizedState) {
     }
 }
 
+// 模擬階段
 double ISMCTS::simulation(GST &state,DATA &d) {
     int moves[MAX_MOVES];
     int moveCount;
@@ -203,17 +209,28 @@ double ISMCTS::simulation(GST &state,DATA &d) {
     int Turn = ENEMY; 
     int starter = Turn;
 
+    // 模擬遊戲直到結束或達到最大移動次數
     while (!simState.is_over() && moveCounter < maxMoves) {
         moveCount = simState.gen_all_move(moves);
         if (moveCount == 0) break;
-        // int move = simState.highest_weight(d);
-
-        // int randomIndex = dist(rng) % moveCount;
-        // int move = moves[randomIndex];
 
         int move;
-        if(Turn == USER) {
-            move = simState.highest_weight(d);
+
+        // 使用 epsilon-greedy 策略
+        double epsilon = std::max(0.1, 1.0 - (double)moveCounter / 1000.0);
+        std::uniform_real_distribution<> probDist(0.0, 1.0);
+
+        // 根據當前輪次選擇移動
+        if (Turn == USER) {
+            // 使用 epsilon-greedy 策略
+            double p = probDist(rng);
+            if (p < epsilon) {
+                int randomIndex = dist(rng) % moveCount;
+                move = moves[randomIndex];
+            } else {
+                move = simState.highest_weight(d);
+            }
+
             Turn = ENEMY;
         } else {
             int randomIndex = dist(rng) % moveCount;
@@ -230,12 +247,13 @@ double ISMCTS::simulation(GST &state,DATA &d) {
 
     int winner = simState.get_winner() == USER ? 1 : -1;
 
-    return winner;
-}
+//     return winner;
+// }
 
-void ISMCTS::backpropagation(Node *node, double result)
-{
-    while (node != nullptr) {
+// 反向傳播結果
+void ISMCTS::backpropagation(Node *node, double result) {
+    while (node != nullptr){
+
         node->visits++;
         node->wins += result ;
         result = -result;  // 在每一層交替結果
@@ -243,115 +261,42 @@ void ISMCTS::backpropagation(Node *node, double result)
     }
 }
 
+// 計算 UCB 值
 double ISMCTS::calculateUCB(const Node *node) const {
     if (node->visits == 0) return std::numeric_limits<double>::infinity();
     
-
     double winRate = static_cast<double>(node->wins) / node->visits;
-
     double exploration = EXPLORATION_PARAM * std::sqrt(std::log(node->parent->visits) / node->visits);
 
     // UCB公式：利用 + 探索
     return winRate + exploration;
 }
 
-// void ISMCTS::printNodeStats(const Node *node, int indent) const
-// {
-//     std::string indentation(indent * 2, ' ');
-
-//     // Print current node information
-//     int piece = node->move >> 4;
-//     int direction = node->move & 0xf;
-//     const char *dirNames[] = {"S", "E", "W", "N"};
-
-//     if (node->move != -1)
-//     {
-//         std::cout << indentation << "Move: ";
-//         if (piece < PIECES)
-//             std::cout << static_cast<char>('A' + piece % PIECES);
-//         else
-//             std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
-
-//         std::cout << " " << dirNames[direction];
-//         std::cout << " - Wins/Visits: " << node->wins << "/" << node->visits;
-//         std::cout << " = " << std::fixed << std::setprecision(2)
-//                   << (node->visits > 0 ? static_cast<double>(node->wins) / node->visits : 0) << std::endl;
-//     }
-//     else
-//     {
-//         std::cout << indentation << "Root Node - Wins/Visits: " << node->wins << "/" << node->visits << std::endl;
-//     }
-
-//     if (node->visits >= 10)
-//     {
-//         for (const auto &child : node->children)
-//         {
-//             if (child->visits > 0) printNodeStats(child.get(), indent + 1);
-            
-//         }
-//     }
-// }
-
-// void printTree(Node* node, int depth = 0, int maxDepth = 2) {
-//     if (!node || depth > maxDepth) return;
-//     const char* dirNames[] = {"S", "E", "W", "N"};
-//     std::string indent(depth * 2, ' ');
-//     if (node->move != -1) { // 忽略根節點未指定的 move
-//         int piece = node->move >> 4;
-//         int direction = node->move & 0xf;
-//         std::cout << indent << "- 移動 ";
-//         if (piece < PIECES)
-//             std::cout << static_cast<char>('A' + piece % PIECES);
-//         else
-//             std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
-//         std::cout << " " << dirNames[direction]
-//                   << " | 勝率: " << std::fixed << std::setprecision(2)
-//                   << (node->visits > 0 ? static_cast<double>(node->wins) / node->visits * 100 : 0.0)
-//                   << "% (" << node->wins << "/" << node->visits << ")"
-//                   << std::endl;
-//     } else {
-//         std::cout << indent << "- 根節點" << std::endl;
-//     }
-//     for (auto& child : node->children) {
-//         printTree(child.get(), depth + 1, maxDepth);
-//     }
-// }
-
+// 尋找最佳移動(AI主程式)
 int ISMCTS::findBestMove(GST &game, DATA &d) {
-    // if (game.is_over()) return -1;
-
     Node::cleanup(root);
     root.reset(new Node(game));
     arrangement_stats.clear();
 
     for (int i = 0; i < simulations; i++) {
         Node* currentNode = root.get();
+        
+        // 獲取確定化狀態
         GST determinizedState = getDeterminizedState(game, i);
 
         // 選擇階段
         selection(currentNode, determinizedState);
-        
-        // std::vector<int> path;
-        // Node* node = currentNode;
-        // while (node && node->parent != nullptr) {
-        //     path.push_back(node->move);
-        //     node = node->parent;
-        // }
-        // std::reverse(path.begin(), path.end());
-
-        // for (int move : path) {
-        //     determinizedState.do_move(move);
-        // }
 
         // 如果節點沒有子節點且遊戲未結束，進行擴展
         if (currentNode->children.empty() && !currentNode->state.is_over()) {
             expansion(currentNode, determinizedState);
         }
-
+        
         // 確保有子節點可選擇
         Node* nodeToSimulate = currentNode;
         GST simulationState = determinizedState;
 
+        // 隨機選擇一個子節點進行模擬
         if (!currentNode->children.empty()) {
             std::uniform_int_distribution<> dist(0, currentNode->children.size() - 1);
             int randomIndex = dist(rng);
@@ -361,83 +306,30 @@ int ISMCTS::findBestMove(GST &game, DATA &d) {
             // 在確定化狀態上執行這個 move
             simulationState.do_move(nodeToSimulate->move);
         }
-
         int result = simulation(simulationState, d);
 
         // 反向傳播結果
         backpropagation(nodeToSimulate, result);
-
-        //觀察樹狀變化
-        // if ((i + 1) % 2000 == 0) {
-        //     std::cout << "\n=== 模擬次數 " << i + 1 << " 時的樹狀結構 ===\n";
-        //     printTree(root.get(), 0, 3);
-        //     system("pause");
-        // }
-
     }
 
     Node* bestChild = nullptr;
     int maxVisits = -1;
-
-
     const char *dirNames[] = {"N","W","E","S"};
     bool hasValidMoves = false;
 
-    // std::cout << "ISMCTS Decision Statistics:\n";
-    // for (auto &child : root->children) {
-    //     int piece = child->move >> 4;
-    //     int direction = child->move & 0xf;
-    //     std::cout << "Move ";
-    //     if (piece < PIECES)
-    //         std::cout << static_cast<char>('A' + piece % PIECES);
-    //     else
-    //         std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
-    //     std::cout << " " << dirNames[direction] << ": "
-    //               << child->wins << "/" << child->visits
-    //               << " = " << std::fixed << std::setprecision(2)
-    //               << (child->visits > 0 ? static_cast<double>(child->wins) / child->visits : 0.0)
-    //               << std::endl;
-
-    //     if (child->visits > maxVisits) {
-    //         maxVisits = child->visits;
-    //         bestChild = child.get();
-    //         hasValidMoves = true;
-    //     }
-    // }
-
-    // if (!hasValidMoves) {
-    //     std::cout << "No valid moves found. This might indicate the game is already over." << std::endl;
-    //     return -1;
-    // }
-
-    // if (bestChild) {
-    //     int piece = bestChild->move >> 4;
-    //     int direction = bestChild->move & 0xf;
-
-    //     std::cout << "\nChoose best move: ";
-    //     if (piece < PIECES)
-    //         std::cout << static_cast<char>('A' + piece % PIECES);
-    //     else
-    //         std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
-
-    //     std::cout << " " << dirNames[direction] << std::endl;
-    //     std::cout << "Win rate: " << std::fixed << std::setprecision(2)
-    //               << (bestChild->visits > 0 ? static_cast<double>(bestChild->wins) / bestChild->visits * 100 : 0.0)
-    //               << "%" << std::endl;
-    // }
-
+    // 尋找訪問次數最多的子節點(最佳解)
     for (auto& child : root->children) {
         if (child->visits > maxVisits) {
             maxVisits = child->visits;
             bestChild = child.get();
-            hasValidMoves = true;
         }
     }
     if (!hasValidMoves) {
         fprintf(stderr, "No valid moves found. This might indicate the game is already over.\n");
         return -1;
     }
-
+    
+    // 輸出最佳子節點的資訊
     if (bestChild) {
         int piece = bestChild->move >> 4;
         int direction = bestChild->move & 0xf;
@@ -450,3 +342,112 @@ int ISMCTS::findBestMove(GST &game, DATA &d) {
 
     return bestChild->move;
 }
+
+// int ISMCTS::findBestMove(GST &game)
+// {
+//     if (game.is_over())
+//     {
+//         std::cout << "Game is already over. Winner: " << (game.get_winner() == USER ? "User" : "Enemy") << std::endl;
+//         return -1;
+//     }
+
+//     // 清理之前的搜尋樹
+//     Node::cleanup(root);
+
+//     // 創建新的根節點 (改用 new 而不是 make_unique)
+//     root.reset(new Node(game));
+//     arrangement_stats.clear();
+
+//     for (int i = 0; i < simulations; i++)
+//     {
+//         Node *currentNode = root.get();
+//         GST determinizedState = getDeterminizedState(game, i);
+
+//         // 選擇階段
+//         selection(currentNode);
+
+//         // 如果節點沒有子節點且遊戲未結束，進行擴展
+//         if (currentNode->children.empty() && !currentNode->state.is_over())
+//         {
+//             expansion(currentNode, determinizedState);
+//         }
+
+//         // 確保有子節點可選擇
+//         Node *nodeToSimulate = currentNode;
+//         if (!currentNode->children.empty())
+//         {
+//             // 隨機選擇一個子節點進行模擬
+//             std::uniform_int_distribution<> dist(0, currentNode->children.size() - 1);
+//             int randomIndex = dist(rng);
+//             auto it = std::next(currentNode->children.begin(), randomIndex);
+//             nodeToSimulate = it->get();
+//         }
+
+//         // 一定要進行模擬
+//         GST simulationState = nodeToSimulate->state;
+//         int result = simulation(simulationState);
+
+//         // 反向傳播結果
+//         backpropagation(nodeToSimulate, result);
+//     }
+
+//     Node *bestChild = nullptr;
+//     int maxVisits = -1;
+
+//     // Reverse the direction names to match the AI's perspective
+//     const char *dirNames[] = {"S", "E", "W", "N"};
+
+//     // Print detailed statistics for each move
+//     std::cout << "ISMCTS Decision Statistics:\n";
+//     bool hasValidMoves = false;
+
+//     for (auto &child : root->children)
+//     {
+//         int piece = child->move >> 4;
+//         int direction = child->move & 0xf;
+
+//         std::cout << "移動 ";
+//         if (piece < PIECES)
+//             std::cout << static_cast<char>('A' + piece % PIECES);
+//         else
+//             std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
+
+//         std::cout << " " << dirNames[direction] << ": "
+//                   << child->wins << "/" << child->visits
+//                   << " = " << std::fixed << std::setprecision(2)
+//                   << (child->visits > 0 ? static_cast<double>(child->wins) / child->visits : 0.0)
+//                   << std::endl;
+
+//         if (child->visits > maxVisits)
+//         {
+//             maxVisits = child->visits;
+//             bestChild = child.get();
+//             hasValidMoves = true;
+//         }
+//     }
+
+//     if (!hasValidMoves)
+//     {
+//         std::cout << "No valid moves found. This might indicate the game is already over." << std::endl;
+//         return -1;
+//     }
+
+//     if (bestChild)
+//     {
+//         int piece = bestChild->move >> 4;
+//         int direction = bestChild->move & 0xf;
+
+//         std::cout << "\n選擇最佳移動: ";
+//         if (piece < PIECES)
+//             std::cout << static_cast<char>('A' + piece % PIECES);
+//         else
+//             std::cout << static_cast<char>('a' + (piece - PIECES) % PIECES);
+
+//         std::cout << " " << dirNames[direction] << std::endl;
+//         std::cout << "勝率: " << std::fixed << std::setprecision(2)
+//                   << (bestChild->visits > 0 ? static_cast<double>(bestChild->wins) / bestChild->visits * 100 : 0.0)
+//                   << "%" << std::endl;
+//     }
+
+//     return bestChild ? bestChild->move : -1;
+// }

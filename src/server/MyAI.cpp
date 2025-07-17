@@ -192,8 +192,8 @@ void MyAI::Print_chessboard()
 // =============================
 void MyAI::Generate_move(char* move)
 {
-    // int best_move = game.highest_weight(data);
-    int best_move = ismcts.findBestMove(game, data);
+    // int best_move = game.highest_weight(data); //純粹4tuple決定下一步
+    int best_move = ismcts.findBestMove(game, data); // 使用 ISMCTS 找到最佳移動 (目前是4tuple + ISMCTS)
     
     int piece = best_move >> 4;
     int direction = best_move & 0xf;

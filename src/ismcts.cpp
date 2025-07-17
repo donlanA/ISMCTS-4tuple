@@ -250,7 +250,7 @@ double ISMCTS::simulation(GST &state,DATA &d) {
                 int randomIndex = dist(rng) % moveCount;
                 move = moves[randomIndex];
             } else {
-                move = simState.highest_weight(d);
+                move = simState.highest_weight(d);// 考量4-tuple的模擬移動
             }
             Turn = ENEMY;
         } else {

@@ -43,7 +43,7 @@ void SetColor(int color = 7){
 // GST::set_board
 // 根據字串設定棋盤（for server）
 // =============================
-void GST::set_board(char* position){        //for server
+void GST::set_board(char* position){        //跟server對接的時候用的，接收傳過來的棋盤
     memset(board, 0, sizeof(board));
     memset(pos, 0, sizeof(pos));
     memset(revealed, false, sizeof(revealed));
@@ -521,7 +521,7 @@ float GST::get_weight(int base_pos, const int* offset, DATA& d){
 
 // =============================
 // GST::compute_board_weight
-// 計算整個棋盤的平均權重
+// 計算整個棋盤所有tuple的平均權重
 // =============================
 float GST::compute_board_weight(DATA& d){
     float total_weight = 0;
@@ -561,7 +561,8 @@ int GST::highest_weight(DATA& d){
         int src = pos[piece];
         int dst = src + dir_val[direction];  //the position after move
 
-        if(pos[piece] == 0 && direction == 1 && nowTurn == USER && board[0] == BLUE){  // if check_win_move() = true, won't move and return directly
+        // 如果我方的藍棋在對方的角落上就直接出去
+        if(pos[piece] == 0 && direction == 1 && nowTurn == USER && board[0] == BLUE){
             WEIGHT[move_index] = 1;
         }
         else if(pos[piece] == 5 && direction == 2 && nowTurn == USER && board[5] == BLUE){
@@ -573,12 +574,12 @@ int GST::highest_weight(DATA& d){
         else if(pos[piece] == 35 && direction == 2 && nowTurn == ENEMY && board[35] == -BLUE){
             WEIGHT[move_index] = 1;        
         }
-        else if(pos[piece] == 4 && direction == 2 && nowTurn == USER && color[piece] == BLUE){      //客製化
+        else if(pos[piece] == 4 && direction == 2 && nowTurn == USER && color[piece] == BLUE){      //當初為了比賽加的，所以只寫User的部分，Enemy要再補上
             if(board[5] >= 0 && board[11] >= 0){
                 WEIGHT[move_index] = 1;
             }
         }
-        else if(pos[piece] == 1 && direction == 1 && nowTurn == USER && color[piece] == BLUE){      //客製化
+        else if(pos[piece] == 1 && direction == 1 && nowTurn == USER && color[piece] == BLUE){      //同上
             if(board[0] >= 0 && board[6] >= 0){
                 WEIGHT[move_index] = 1;
             }
@@ -600,7 +601,7 @@ int GST::highest_weight(DATA& d){
             for(int i = 0; i < PIECES * 2; i++) color[i] = tmp_color[i];
         }
 
-        //調參數時間
+        //調參數時間，以下程式的目標是讓每個角落把離他最近的棋拉過去
         int row = dst / 6;
         int col = dst % 6;
         

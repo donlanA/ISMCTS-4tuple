@@ -10,12 +10,13 @@ class GST;
 // =============================
 class DATA {
 public:
-    // LUTw_E/LUTv_E: Enemy 4-tuple權重/次數
-    // LUTw_U/LUTv_U: User 4-tuple權重/次數
+    // LUTw_E/LUTv_E: Enemy 4-tuple 贏的次數/去過的次數
+    // LUTw_U/LUTv_U: User 4-tuple 贏的次數/去過的次數
     unsigned long long LUTw_E[TUPLE_NUM * FEATURE_NUM + 1] = {0}, LUTv_E[TUPLE_NUM * FEATURE_NUM + 1] = {0};
     unsigned long long LUTw_U[TUPLE_NUM * FEATURE_NUM + 1] = {0}, LUTv_U[TUPLE_NUM * FEATURE_NUM + 1] = {0};
 
-    // R1、B1 variable：不同資料集的4-tuple權重/次數
+    // R1: 敵方紅棋剩一顆的情況 
+    // B1: 我方藍棋剩一顆的情況
     unsigned long long LUTw_E_R1[TUPLE_NUM * FEATURE_NUM + 1] = {0}, LUTv_E_R1[TUPLE_NUM * FEATURE_NUM + 1] = {0};
     unsigned long long LUTw_U_R1[TUPLE_NUM * FEATURE_NUM + 1] = {0}, LUTv_U_R1[TUPLE_NUM * FEATURE_NUM + 1] = {0};
     unsigned long long LUTw_E_B1[TUPLE_NUM * FEATURE_NUM + 1] = {0}, LUTv_E_B1[TUPLE_NUM * FEATURE_NUM + 1] = {0};
@@ -32,7 +33,6 @@ public:
         return (location - 1) * FEATURE_NUM + feature;
     }
     void read_data_file(int num); // 讀取資料檔案
-    void write_data_file();       // 寫入資料檔案
     void write_data_file_run(int run); // 寫入指定回合資料檔案
 
     // R1、B1 function：不同資料集的讀寫

@@ -6,6 +6,7 @@
 // =============================
 void DATA::init_data(){
     for(int i = 0; i < TUPLE_NUM * FEATURE_NUM; i++){
+        //初始權重1/2 = 0.5
         LUTw_E[i] = 1;      // 敵方權重初始值
         LUTv_E[i] = 2;      // 敵方次數初始值
         LUTw_U[i] = 1;      // 我方權重初始值
@@ -24,8 +25,8 @@ void DATA::init_data(){
     int loca_num = 0;
     for(int i = 0; i < ROW * COL; i++){     // 0~35
         int loc;
-        // 檢查橫向 1x4 pattern
-        if(i % 6 <= 2){
+        //把盤面上的所有tuple做編碼，一個一個存到trans裡方便未來查找跟轉換
+        if(i % 6 <= 2){     //1x4
             loca_num++;
             loc = i * 36 * 36 * 36 + 
                   (i + 1) * 36 * 36 + 
@@ -33,8 +34,7 @@ void DATA::init_data(){
                   (i + 3);
             trans[loc] = loca_num;
         }
-        // 檢查縱向 4x1 pattern
-        if(i < 18){
+        if(i < 18){         //4x1
             loca_num++;
             loc = i * 36 * 36 * 36 + 
                   (i + 6) * 36 * 36 + 
@@ -42,8 +42,7 @@ void DATA::init_data(){
                   (i + 18);
             trans[loc] = loca_num;
         }
-        // 檢查 2x2 pattern
-        if(i % 6 <= 4 && i < 30){
+        if(i % 6 <= 4 && i < 30){       //2x2
             loca_num++;
             loc = i * 36 * 36 * 36 + 
                   (i + 1) * 36 * 36 + 
@@ -221,33 +220,6 @@ void DATA::read_data_file_B1(int num){       //reada the data in CSV and write t
             LUTv_U_B1[LUT_idx(std::stoll(a[0]), std::stoll(a[1]))] = std::stoll(a[3]);
         }
     }
-}
-
-// =============================
-// 寫入資料檔案
-// =============================
-void DATA::write_data_file(){          //open file & write file
-    std::ofstream Edata, Udata;
-    Edata.open("Edata.csv", std::ios::out | std::ios::trunc);
-    Udata.open("Udata.csv", std::ios::out | std::ios::trunc);
-
-    Edata << "location" << "," << "feature" << "," << "LUTw" << "," << "LUTv" << "," << "4-tuple win rate" << std::endl;
-    Udata << "location" << "," << "feature" << "," << "LUTw" << "," << "LUTv" << "," << "4-tuple win rate" << std::endl;
-
-    for(int i = 1; i <= TUPLE_NUM; i++){
-        for(int j = 0; j < FEATURE_NUM; j++){
-            Edata << i << "," << j << "," << LUTw_E[LUT_idx(i, j)] << "," << LUTv_E[LUT_idx(i, j)] << "," << (float)LUTw_E[LUT_idx(i, j)] / (float)LUTv_E[LUT_idx(i, j)] << std::endl;
-        }
-    }
-
-    for(int i = 1; i <= TUPLE_NUM; i++){
-        for(int j = 0; j < FEATURE_NUM; j++){
-            Udata << i << "," << j << "," << LUTw_U[LUT_idx(i, j)] << "," << LUTv_U[LUT_idx(i, j)] << "," << (float)LUTw_U[LUT_idx(i, j)] / (float)LUTv_U[LUT_idx(i, j)] << std::endl;
-        }
-    }
-    
-    Edata.close();
-    Udata.close();
 }
 
 void DATA::write_data_file_run(int run){          //open file & write file

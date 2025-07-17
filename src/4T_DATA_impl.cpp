@@ -1,26 +1,31 @@
 #include "4T_header.h"
 
+// =============================
+// DATA::init_data
+// 初始化所有 LUT 及 4-tuple pattern 位置轉換表
+// =============================
 void DATA::init_data(){
     for(int i = 0; i < TUPLE_NUM * FEATURE_NUM; i++){
-        LUTw_E[i] = 1;
-        LUTv_E[i] = 2;
-        LUTw_U[i] = 1;
-        LUTv_U[i] = 2;
+        LUTw_E[i] = 1;      // 敵方權重初始值
+        LUTv_E[i] = 2;      // 敵方次數初始值
+        LUTw_U[i] = 1;      // 我方權重初始值
+        LUTv_U[i] = 2;      // 我方次數初始值
 
-        LUTw_E_R1[i] = 1;   // R1
+        LUTw_E_R1[i] = 1;   // R1 資料集初始值
         LUTv_E_R1[i] = 2;
         LUTw_U_R1[i] = 1;
         LUTv_U_R1[i] = 2;
-        LUTw_E_B1[i] = 1;   // B1
+        LUTw_E_B1[i] = 1;   // B1 資料集初始值
         LUTv_E_B1[i] = 2;
         LUTw_U_B1[i] = 1;
         LUTv_U_B1[i] = 2;
     }
 
     int loca_num = 0;
-    for(int i = 0; i < ROW * COL; i++){     //0~35
+    for(int i = 0; i < ROW * COL; i++){     // 0~35
         int loc;
-        if(i % 6 <= 2){         // Check horizontal 1x4
+        // 檢查橫向 1x4 pattern
+        if(i % 6 <= 2){
             loca_num++;
             loc = i * 36 * 36 * 36 + 
                   (i + 1) * 36 * 36 + 
@@ -28,8 +33,8 @@ void DATA::init_data(){
                   (i + 3);
             trans[loc] = loca_num;
         }
-        
-        if(i < 18){     // Check vertical 4x1
+        // 檢查縱向 4x1 pattern
+        if(i < 18){
             loca_num++;
             loc = i * 36 * 36 * 36 + 
                   (i + 6) * 36 * 36 + 
@@ -37,8 +42,8 @@ void DATA::init_data(){
                   (i + 18);
             trans[loc] = loca_num;
         }
-        
-        if(i % 6 <= 4 && i < 30){       // Check 2x2
+        // 檢查 2x2 pattern
+        if(i % 6 <= 4 && i < 30){
             loca_num++;
             loc = i * 36 * 36 * 36 + 
                   (i + 1) * 36 * 36 + 
@@ -49,6 +54,10 @@ void DATA::init_data(){
     }
 }
 
+// =============================
+// _csv
+// 字串分割成 vector（以逗號分隔）
+// =============================
 std::vector<std::string> _csv(std::string s){
     std::vector<std::string> arr;
     std::istringstream delim(s);
@@ -56,11 +65,14 @@ std::vector<std::string> _csv(std::string s){
     int c = 0;
     while (getline(delim, token, ',')){
         arr.push_back(token);
-        c++;                                           
+        c++;                                            
     }
     return arr;
 }
 
+// =============================
+// 讀取資料檔案，更新 LUT
+// =============================
 void DATA::read_data_file(int num){       //reada the data in CSV and write to 2-tuple array    
     // std::ifstream iEdata("Edata.csv", std::ios::in);
 
@@ -211,6 +223,9 @@ void DATA::read_data_file_B1(int num){       //reada the data in CSV and write t
     }
 }
 
+// =============================
+// 寫入資料檔案
+// =============================
 void DATA::write_data_file(){          //open file & write file
     std::ofstream Edata, Udata;
     Edata.open("Edata.csv", std::ios::out | std::ios::trunc);

@@ -6,13 +6,19 @@ DATA data;
 GST game;
 ISMCTS ismcts(10000);
 
+// =============================
+// MyAI 建構子/解構子
+// =============================
 MyAI::MyAI(void){
-    data.init_data();
-    data.read_data_file(500000);
+    data.init_data();           // 初始化4-tuple資料
+    data.read_data_file(500000);// 讀取資料
 }
 
 MyAI::~MyAI(void){}
 
+// =============================
+// Ini：初始化玩家、設定初始棋盤
+// =============================
 void MyAI::Ini(const char* data[], char* response)
 {
     // 設置玩家
@@ -26,7 +32,7 @@ void MyAI::Ini(const char* data[], char* response)
     }
 
     char position[16];
-    Init_board_state(position);
+    Init_board_state(position); // 產生初始棋盤
     
     // P2 的棋子位置
     snprintf(response, 50, "%c%c %c%c %c%c %c%c %c%c %c%c %c%c %c%c", 
@@ -36,6 +42,9 @@ void MyAI::Ini(const char* data[], char* response)
              position[12], position[13], position[14], position[15]);
 }
 
+// =============================
+// Set：隨機選擇紅棋
+// =============================
 auto now = std::chrono::high_resolution_clock::now();
 auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
 
@@ -51,20 +60,26 @@ void MyAI::Set(char* response){        //設定紅棋
     // snprintf(response, 50, "SET:ABDH");
 }
 
+// =============================
+// Get：取得移動
+// =============================
 void MyAI::Get(const char* data[], char* response)      //get move
 {    
     // set dice & board
     char position[49];  //3*16+1
     position[0] = '\0';
     snprintf(position, sizeof(position), "%s", data[0] + 4);
-    Set_board(position);
+    Set_board(position); // 設定棋盤
 
     // generate move
     char move[50];
-    Generate_move(move);
+    Generate_move(move); // 產生移動
     snprintf(response, 50, "MOV:%s", move); 
 }
 
+// =============================
+// Exit：離開
+// =============================
 void MyAI::Exit(const char* data[], char* response)
 {
     fprintf(stderr, "Bye~\n");
@@ -72,6 +87,9 @@ void MyAI::Exit(const char* data[], char* response)
 
 // *********************** AI 函數 *********************** //
 
+// =============================
+// Init_board_state：產生初始棋盤狀態
+// =============================
 void MyAI::Init_board_state(char* position)
 {
     int order[PIECES] = {0, 1, 2, 3, 4, 5, 6, 7}; // A~H
@@ -93,6 +111,9 @@ void MyAI::Init_board_state(char* position)
     }
 }
 
+// =============================
+// Set_board：根據 position 設定棋盤
+// =============================
 void MyAI::Set_board(char* position)
 {
     memset(board, -1, sizeof(board));
@@ -104,7 +125,7 @@ void MyAI::Set_board(char* position)
 
     for(int i = 0; i < PIECES * 2; i++)
     {
-        int index = i * 3;      //coordinates and color
+        int index = i * 3;      //座標與顏色
 
         if(position[index] == '9' && position[index + 1] == '9')
         {
@@ -128,15 +149,18 @@ void MyAI::Set_board(char* position)
             board[position[index + 1] - '0'][position[index] - '0'] = i;
             piece_pos[i] = (position[index + 1] - '0') * BOARD_SIZE + (position[index] - '0');
         }
-        piece_colors[i] = position[index + 2];  // set chess color
+        piece_colors[i] = position[index + 2];  // 設定棋子顏色
     }
     
-    game.set_board(position);
+    game.set_board(position); // 設定 GST 棋盤
     // game.record_board();
 
-    Print_chessboard();
+    Print_chessboard(); // 印出棋盤
 }
 
+// =============================
+// Print_chessboard：印出棋盤狀態
+// =============================
 void MyAI::Print_chessboard()
 {
     fprintf(stderr, "\n");
@@ -150,7 +174,7 @@ void MyAI::Print_chessboard()
             else if(board[i][j] < PIECES) {
                 fprintf(stderr, "%4c", board[i][j] + 'A');
             }
-            else fprintf(stderr, "%4c", board[i][j] - PIECES + 'a'); // lower case represents p2's chess
+            else fprintf(stderr, "%4c", board[i][j] - PIECES + 'a'); // 小寫代表 P2 棋子
         }
         fprintf(stderr, "\n");
     }
@@ -163,10 +187,12 @@ void MyAI::Print_chessboard()
     fprintf(stderr, "The number of P1 pieces: %d\nThe number of P2 pieces: %d\n", p1_piece_num, p2_piece_num);
 }
 
+// =============================
+// Generate_move：產生最佳移動
+// =============================
 void MyAI::Generate_move(char* move)
 {
-    int best_move = game.highest_weight(data);
-
+    int best_move = game.highest_weight(data); // 取得最佳移動
     // int best_move = ismcts.findBestMove(game, data);
     
     int piece = best_move >> 4;
@@ -185,6 +211,6 @@ void MyAI::Generate_move(char* move)
 
     snprintf(move, 50, "%c,%s", piece_char, dir_str);
     
-    game.do_move(best_move);
+    game.do_move(best_move); // 執行移動
 
 }

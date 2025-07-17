@@ -8,13 +8,17 @@
 
 constexpr int MCTS::dir_val[4];
 
-// MCTS 實現
+// =============================
+// MCTS 建構子
+// =============================
 MCTS::MCTS(int simulations) : simulations(simulations) {
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     rng.seed(static_cast<unsigned int>(seed));
 }
 
+// =============================
 // 重置 MCTS 狀態
+// =============================
 void MCTS::reset() {
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     rng.seed(static_cast<unsigned int>(seed));
@@ -22,7 +26,9 @@ void MCTS::reset() {
     Node::cleanup(root);
 }
 
+// =============================
 // 檢查是否會吃掉敵方紅棋
+// =============================
 bool MCTS::would_eat_enemy_red(const GST& game, int piece, int dst) const {
     int target_piece = game.piece_board[dst];
     if (target_piece == -1) return false;
@@ -35,7 +41,9 @@ bool MCTS::would_eat_enemy_red(const GST& game, int piece, int dst) const {
     return std::abs(target_color) == RED;
 }
 
-// 選擇階段
+// =============================
+// 選擇階段：根據 UCB 選擇最佳子節點
+// =============================
 void MCTS::selection(Node*& node) {
     while (!node->state.is_over() && !node->children.empty()) {
         Node* bestChild = nullptr;
@@ -58,7 +66,9 @@ void MCTS::selection(Node*& node) {
     }
 }
 
-// 擴展階段
+// =============================
+// 擴展階段：產生所有合法子節點
+// =============================
 void MCTS::expansion(Node* node) {
     if (node->state.is_over()) return;
 
@@ -81,7 +91,9 @@ void MCTS::expansion(Node* node) {
     }
 }
 
-// 模擬階段
+// =============================
+// 模擬階段：隨機模擬遊戲直到結束
+// =============================
 int MCTS::simulation(GST& state) {
     GST simState = state;
     int moves[MAX_MOVES];
@@ -106,7 +118,9 @@ int MCTS::simulation(GST& state) {
     return simState.get_winner() == ENEMY ? 1 : -1;
 }
 
-// 反向傳播結果
+// =============================
+// 反向傳播階段：將模擬結果回傳至路徑上的所有節點
+// =============================
 void MCTS::backpropagation(Node* node, int result) {
     while (node != nullptr) {
         node->visits += 1;
@@ -116,7 +130,9 @@ void MCTS::backpropagation(Node* node, int result) {
     }
 }
 
+// =============================
 // 計算 UCB 值
+// =============================
 double MCTS::calculateUCB(const Node* node) const {
     if (node->visits == 0) return std::numeric_limits<double>::infinity();
 
@@ -126,7 +142,9 @@ double MCTS::calculateUCB(const Node* node) const {
     return exploitation + exploration;
 }
 
-// 尋找最佳移動(AI主程式)
+// =============================
+// 尋找最佳移動 (AI主程式)
+// =============================
 int MCTS::findBestMove(GST& game) {
     Node::cleanup(root);
     root.reset(new Node(game));

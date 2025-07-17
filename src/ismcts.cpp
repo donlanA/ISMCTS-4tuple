@@ -230,7 +230,7 @@ double ISMCTS::simulation(GST &state,DATA &d) {
 
     int maxMoves = 1000;
     int moveCounter = 0;
-    int Turn = USER;
+    int Turn = ENEMY;
 
     // 模擬遊戲直到結束或達到最大移動次數
     while (!simState.is_over() && moveCounter < maxMoves) {
@@ -280,7 +280,8 @@ double ISMCTS::simulation(GST &state,DATA &d) {
 void ISMCTS::backpropagation(Node *node, double result) {
     while (node != nullptr){
         node->visits++;
-        node->wins += result;
+        node->wins += result ;
+        result = -result;  // 在每一層交替結果
         node = node->parent;
     }
 }

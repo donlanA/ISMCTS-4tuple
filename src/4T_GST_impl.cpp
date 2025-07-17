@@ -2,22 +2,28 @@
 #include "ismcts.hpp"
 #include "mcts.hpp"
 
+// =============================
+// 靜態變數：棋子、方向、初始位置、pattern offset
+// =============================
 static std::map<char, int> piece_index = {
     {'A', 0}, {'B', 1}, {'C', 2}, {'D', 3}, {'E', 4}, {'F', 5}, {'G', 6}, {'H', 7},
     {'a', 8}, {'b', 9}, {'c', 10}, {'d', 11}, {'e', 12}, {'f', 13}, {'g', 14}, {'h', 15}
-};
-static std::map<char, int> dir_index = {{'N', 0}, {'W', 1}, {'E', 2}, {'S', 3}};
+}; // 棋子字元對應編號
+static std::map<char, int> dir_index = {{'N', 0}, {'W', 1}, {'E', 2}, {'S', 3}}; // 方向字元對應編號
 static std::map<int, char> print_piece = {
     {0, 'A'}, {1, 'B'}, {2, 'C'}, {3, 'D'}, {4, 'E'}, {5, 'F'}, {6, 'G'}, {7, 'H'},
     {8, 'a'}, {9, 'b'}, {10, 'c'}, {11, 'd'}, {12, 'e'}, {13, 'f'}, {14, 'g'}, {15, 'h'}
-};
-static const int init_pos[2][PIECES] = {{25,26,27,28,31,32,33,34}, {10,9,8,7,4,3,2,1}};
-static const int dir_val[4] = {-COL, -1, 1, COL};
+}; // 棋子編號對應字元
+static const int init_pos[2][PIECES] = {{25,26,27,28,31,32,33,34}, {10,9,8,7,4,3,2,1}}; // 初始位置
+static const int dir_val[4] = {-COL, -1, 1, COL}; // 方向偏移量
 
-static const int offset_1x4[4] = {0, 1, 2, 3};
-static const int offset_2x2[4] = {0, 1, 6, 7};
-static const int offset_4x1[4] = {0, 6, 12, 18};
+static const int offset_1x4[4] = {0, 1, 2, 3};    // 橫向 1x4 pattern
+static const int offset_2x2[4] = {0, 1, 6, 7};    // 2x2 pattern
+static const int offset_4x1[4] = {0, 6, 12, 18};  // 縱向 4x1 pattern
 
+// =============================
+// 終端顏色設定（Windows/ANSI）
+// =============================
 void SetColor(int color = 7){
     #ifdef _WIN32
         HANDLE hConsole;
@@ -33,6 +39,10 @@ void SetColor(int color = 7){
     #endif
 }
 
+// =============================
+// GST::set_board
+// 根據字串設定棋盤（for server）
+// =============================
 void GST::set_board(char* position){        //for server
     memset(board, 0, sizeof(board));
     memset(pos, 0, sizeof(pos));
@@ -100,7 +110,10 @@ void GST::set_board(char* position){        //for server
     return;
 }
 
-//initialize data
+// =============================
+// GST::init_board
+// 初始化棋盤、隨機分配紅棋
+// =============================
 void GST::init_board(){
     auto now = std::chrono::system_clock::now();
     auto now_as_duration = now.time_since_epoch();
@@ -180,6 +193,10 @@ void GST::init_board(){
     return;
 }
 
+// =============================
+// GST::print_board
+// 印出棋盤、剩餘棋子、被吃棋子
+// =============================
 void GST::print_board(){    //print the board now & print User's remain chess & print eaten Enemy's chess
     printf("step = %d\n", step - 1);
     for (int i = 0; i < ROW * COL; i++) {
@@ -213,6 +230,10 @@ void GST::print_board(){    //print the board now & print User's remain chess & 
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
+// =============================
+// GST::gen_move
+// 產生指定棋子的所有合法移動
+// =============================
 int GST::gen_move(int* move_arr, int piece, int location, int& count){  //generate the possible step
     int row = location / ROW;
     int col = location % COL;
@@ -239,6 +260,10 @@ int GST::gen_move(int* move_arr, int piece, int location, int& count){  //genera
     return count;   //the number of possible step
 }
 
+// =============================
+// GST::gen_all_move
+// 產生所有合法移動
+// =============================
 int GST::gen_all_move(int* move_arr){   //gernerate all posibility of chess step
     int count = 0;
     int offset = nowTurn == ENEMY ? PIECES : 0;
@@ -253,12 +278,20 @@ int GST::gen_all_move(int* move_arr){   //gernerate all posibility of chess step
     return count;
 }
 
+// =============================
+// check_win_move
+// 判斷移動是否可直接獲勝
+// =============================
 bool check_win_move(int location, int dir){     //if chess is in corner, check next move will win or not
     if(location == 0 || location == 30) return dir == 1 ? true : false;
     else if(location == 5 || location == 35) return dir == 2 ? true : false;
     return false;
 }
 
+// =============================
+// GST::do_move
+// 執行移動，更新棋盤、吃棋、勝負判斷
+// =============================
 void GST::do_move(int move){    //move chess
     int piece = move >> 4;
     int direction = move & 0xf;
@@ -323,6 +356,10 @@ void GST::do_move(int move){    //move chess
     nowTurn ^= 1; //change player
 }
 
+// =============================
+// GST::undo
+// 回復到上一步
+// =============================
 void GST::undo(){   //return to last move(use to return status of random move)
     if(winner != -1) winner = -1;
     
@@ -375,6 +412,10 @@ void GST::undo(){   //return to last move(use to return status of random move)
     pos[piece] = src;
 }
 
+// =============================
+// GST::is_over
+// 判斷遊戲是否結束
+// =============================
 bool GST::is_over(){    //game end or not => the number of remain chess color
     if(n_plies >= 200) {
         winner = -2; // -2表示平局
@@ -394,7 +435,10 @@ bool GST::is_over(){    //game end or not => the number of remain chess color
     return false;
 }
 
-// Helper function to check if a pattern is valid given base position
+// =============================
+// GST::is_valid_pattern
+// 檢查4-tuple pattern是否合法
+// =============================
 bool GST::is_valid_pattern(int base_pos, const int* offset){
     int base_row = base_pos / COL;
     int base_col = base_pos % COL;
@@ -412,6 +456,10 @@ bool GST::is_valid_pattern(int base_pos, const int* offset){
     return true;
 }
 
+// =============================
+// GST::get_loc
+// 取得4-tuple pattern的位置編碼
+// =============================
 int GST::get_loc(int base_pos, const int* offset){ 
     int position[4];
     for(int i = 0; i < 4; i++){
@@ -420,6 +468,10 @@ int GST::get_loc(int base_pos, const int* offset){
     return (position[0] * 36 * 36 * 36 + position[1] * 36 * 36 + position[2] * 36 + position[3]);
 }
 
+// =============================
+// GST::get_feature_unknown
+// 取得4-tuple pattern的特徵編碼
+// =============================
 int GST::get_feature_unknown(int base_pos, const int* offset){           // the piece color
     int features[4];
     for(int i = 0; i < 4; i++){
@@ -434,6 +486,10 @@ int GST::get_feature_unknown(int base_pos, const int* offset){           // the 
     return (features[0] * 64 + features[1] * 16 + features[2] * 4 + features[3]);
 }
 
+// =============================
+// GST::get_weight
+// 取得4-tuple pattern的權重
+// =============================
 float GST::get_weight(int base_pos, const int* offset, DATA& d){
     int feature = get_feature_unknown(base_pos, offset);
     int LUTidx = d.LUT_idx(d.trans[get_loc(base_pos, offset)], feature);
@@ -463,6 +519,10 @@ float GST::get_weight(int base_pos, const int* offset, DATA& d){
     return weight;
 }
 
+// =============================
+// GST::compute_board_weight
+// 計算整個棋盤的平均權重
+// =============================
 float GST::compute_board_weight(DATA& d){
     float total_weight = 0;
     
@@ -484,6 +544,10 @@ float GST::compute_board_weight(DATA& d){
     return total_weight / (float)TUPLE_NUM;
 }
 
+// =============================
+// GST::highest_weight
+// 取得權重最高的合法移動
+// =============================
 int GST::highest_weight(DATA& d){
     float WEIGHT[MAX_MOVES] = {0};
     int root_nmove;

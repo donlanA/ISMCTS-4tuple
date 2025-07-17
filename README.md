@@ -131,3 +131,9 @@ GPW used(x,y) = (pos%row, pos/col)
  -   A   B   C   D   -
  -   E   F   G   H   -
 ```
+
+### 編譯完成後的程式與server連接
+[連接方式](./picture/server_connect_AI_path.png)
+
+### 論文
+[Information Set Monte Carlo Tree Search](https://eprints.whiterose.ac.uk/id/eprint/75048/1/CowlingPowleyWhitehouse2012.pdf)

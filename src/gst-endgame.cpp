@@ -753,7 +753,7 @@ int main(){
             std::cout << "Player 1 (ISMCTS) 思考中...\n";
             int move = ismcts.findBestMove(game, data);
             if (move == -1) {
-                std::cout << "MCTS 無法找到有效移動，玩家1可能已經輸了！\n";
+                std::cout << "ISMCTS 無法找到有效移動，玩家1可能已經輸了！\n";
                 break;
             }
             
@@ -763,7 +763,7 @@ int main(){
             std::cout << "Player 2 (MCTS) 思考中...\n";
             int move = mcts.findBestMove(game);
             if (move == -1) {
-                std::cout << "ISMCTS 無法找到有效移動，玩家2可能已經輸了！\n";
+                std::cout << "MCTS 無法找到有效移動，玩家2可能已經輸了！\n";
                 break;
             }
             

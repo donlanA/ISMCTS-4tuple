@@ -18,6 +18,9 @@ static std::map<int, char> print_piece = {
 }; // 棋子編號對應字元
 static const int init_pos[2][PIECES] = {{25,26,27,28,31,32,33,34}, {10,9,8,7,4,3,2,1}}; // 初始位置
 static const int dir_val[4] = {-COL, -1, 1, COL}; // 方向偏移量
+static const int offset_1x4[4] = {0, 1, 2, 3};    // 橫向 1x4 pattern
+static const int offset_2x2[4] = {0, 1, 6, 7};    // 2x2 pattern
+static const int offset_4x1[4] = {0, 6, 12, 18};  // 縱向 4x1 pattern
 
 // =============================
 // GST::init_board
@@ -382,163 +385,486 @@ bool GST::is_over(){    //game end or not => the number of remain chess color
 // }
 
 
-// 新增統計結構
-// struct GameStats {
-//     int total_games;
-//     // MCTS (Player 1) 統計
-//     int mcts_wins;
-//     int mcts_escape;
-//     int mcts_enemy_red;
-//     int mcts_enemy_blue;
-//     // ISMCTS (Player 2) 統計
-//     int ismcts_wins;
-//     int ismcts_escape;
-//     int ismcts_enemy_red;
-//     int ismcts_enemy_blue;
-//     // 平局
-//     int draws;
+//新增統計結構
+struct GameStats {
+    int total_games;
+    // MCTS (Player 1) 統計
+    int mcts_wins;
+    int mcts_escape;
+    int mcts_enemy_red;
+    int mcts_enemy_blue;
+    // ISMCTS (Player 2) 統計
+    int ismcts_wins;
+    int ismcts_escape;
+    int ismcts_enemy_red;
+    int ismcts_enemy_blue;
+    // 平局
+    int draws;
 
-//     GameStats() : total_games(0), mcts_wins(0), mcts_escape(0), mcts_enemy_red(0), mcts_enemy_blue(0),
-//                   ismcts_wins(0), ismcts_escape(0), ismcts_enemy_red(0), ismcts_enemy_blue(0), draws(0) {}
-// };
+    GameStats() : total_games(0), mcts_wins(0), mcts_escape(0), mcts_enemy_red(0), mcts_enemy_blue(0),
+                  ismcts_wins(0), ismcts_escape(0), ismcts_enemy_red(0), ismcts_enemy_blue(0), draws(0) {}
+};
 
-// void print_game_stats(const GameStats& stats) {
-//     std::cout << "\n===== 統計結果 =====\n";
-//     std::cout << "總場次: " << stats.total_games << "\n\n";
+void print_game_stats(const GameStats& stats) {
+    std::cout << "\n===== 統計結果 =====\n";
+    std::cout << "總場次: " << stats.total_games << "\n\n";
     
-//     std::cout << "MCTS 獲勝: " << stats.mcts_wins << " 場\n";
-//     std::cout << "  - 藍子逃脫: " << stats.mcts_escape << " 場\n";
-//     std::cout << "  - 紅子被吃光: " << stats.mcts_enemy_red << " 場\n";
-//     std::cout << "  - 吃光對手藍子: " << stats.mcts_enemy_blue << " 場\n\n";
+    std::cout << "MCTS 獲勝: " << stats.mcts_wins << " 場\n";
+    std::cout << "  - 藍子逃脫: " << stats.mcts_escape << " 場\n";
+    std::cout << "  - 紅子被吃光: " << stats.mcts_enemy_red << " 場\n";
+    std::cout << "  - 吃光對手藍子: " << stats.mcts_enemy_blue << " 場\n\n";
     
-//     std::cout << "ISMCTS 獲勝: " << stats.ismcts_wins << " 場\n";
-//     std::cout << "  - 藍子逃脫: " << stats.ismcts_escape << " 場\n";
-//     std::cout << "  - 紅子被吃光: " << stats.ismcts_enemy_red << " 場\n";
-//     std::cout << "  - 吃光對手藍子: " << stats.ismcts_enemy_blue << " 場\n\n";
+    std::cout << "ISMCTS 獲勝: " << stats.ismcts_wins << " 場\n";
+    std::cout << "  - 藍子逃脫: " << stats.ismcts_escape << " 場\n";
+    std::cout << "  - 紅子被吃光: " << stats.ismcts_enemy_red << " 場\n";
+    std::cout << "  - 吃光對手藍子: " << stats.ismcts_enemy_blue << " 場\n\n";
     
-//     std::cout << "平局: " << stats.draws << " 場\n";
-// }
+    std::cout << "平局: " << stats.draws << " 場\n";
+}
 
-// void print_progress_bar(int current, int total) {
-//     const int bar_width = 50;
-//     float progress = (float)current / total;
-//     int pos = bar_width * progress;
+void print_progress_bar(int current, int total) {
+    const int bar_width = 50;
+    float progress = (float)current / total;
+    int pos = bar_width * progress;
 
-//     std::cout << "\r[";
-//     for (int i = 0; i < bar_width; ++i) {
-//         if (i < pos) std::cout << "=";
-//         else if (i == pos) std::cout << ">";
-//         else std::cout << " ";
-//     }
-//     std::cout << "] " << int(progress * 100.0) << "% (" << current << "/" << total << ")" << std::flush;
-// }
+    std::cout << "\r[";
+    for (int i = 0; i < bar_width; ++i) {
+        if (i < pos) std::cout << "=";
+        else if (i == pos) std::cout << ">";
+        else std::cout << " ";
+    }
+    std::cout << "] " << int(progress * 100.0) << "% (" << current << "/" << total << ")" << std::flush;
+}
+// =============================
+// GST::is_valid_pattern
+// 檢查給定的 pattern 偏移量是否有效
+// =============================
+bool GST::is_valid_pattern(int base_pos, const int* offset){
+    int base_row = base_pos / COL;
+    int base_col = base_pos % COL;
+    
+    if(offset == offset_1x4){
+        if(base_col > 2) return false;
+    }
+    else if(offset == offset_2x2){
+        if(base_col > 4 || base_row > 4) return false;
+    }
+    else if(offset == offset_4x1){
+        if(base_row > 2) return false;
+    }
 
-// int main() {
-//     std::random_device rd;
-//     std::mt19937 gen(std::chrono::system_clock::now().time_since_epoch().count());
-//     std::uniform_int_distribution<> dist(0, 7);
+    return true;
+}
+// =============================
+// GST::get_loc
+// 取得給定位置和偏移量的唯一編碼
+// =============================
+int GST::get_loc(int base_pos, const int* offset){ 
+    int position[4];
+    for(int i = 0; i < 4; i++){
+        position[i] = base_pos + offset[i];
+    }
+    return (position[0] * 36 * 36 * 36 + position[1] * 36 * 36 + position[2] * 36 + position[3]);
+}
+// =============================
+// GST::get_feature_unknown
+// 獲取給定位置和偏移量的特徵編碼
+// =============================
+int GST::get_feature_unknown(int base_pos, const int* offset){           // the piece color
+    int features[4];
+    for(int i = 0; i < 4; i++){
+        int pos = base_pos + offset[i];
+        if(nowTurn == USER){
+            features[i] = (board[pos] < 0) ? 3 : board[pos];
+        }
+        else{
+            features[i] = (board[pos] > 0) ? 3 : -board[pos];
+        }
+    }
+    return (features[0] * 64 + features[1] * 16 + features[2] * 4 + features[3]);
+}
+// =============================
+// GST::get_weight
+// 獲取給定位置和偏移量的權重值
+// =============================
+float GST::get_weight(int base_pos, const int* offset, DATA& d){
+    int feature = get_feature_unknown(base_pos, offset);
+    int LUTidx = d.LUT_idx(d.trans[get_loc(base_pos, offset)], feature);
+    float weight = 0;
+    if(nowTurn == USER){
+        if(piece_nums[2] == 1){   // E R = 1
+            weight = (float)(d.LUTw_U_R1[LUTidx]) / (float)(d.LUTv_U_R1[LUTidx]);
+            // printf("U R1 using\n");
+        }else if(piece_nums[1] == 1){   // U B = 1
+            weight = (float)(d.LUTw_U_B1[LUTidx]) / (float)(d.LUTv_U_B1[LUTidx]);
+        }else{
+            weight = (float)(d.LUTw_U[LUTidx]) / (float)(d.LUTv_U[LUTidx]);
+        }
+    }else{
+        if(piece_nums[0] == 1){   // U R = 1
+            weight = (float)(d.LUTw_E_R1[LUTidx]) / (float)(d.LUTv_E_R1[LUTidx]);
+            // printf("E R1 using\n");
+        }else if(piece_nums[3] == 1){   // E B = 1
+            weight = (float)(d.LUTw_E_B1[LUTidx]) / (float)(d.LUTv_E_B1[LUTidx]);
+        }else{
+            weight = (float)(d.LUTw_E[LUTidx]) / (float)(d.LUTv_E[LUTidx]);
+        }
+    }
+
+    //printf("location = %d, feature = %d, LUTidx = %d, weight = %f\n", d.trans[get_loc(base_pos, offset)], feature, LUTidx, weight);
+
+    return weight;
+}
+// =============================
+// GST::compute_board_weight
+// 計算整個棋盤的權重值
+// =============================
+float GST::compute_board_weight(DATA& d){
+    float total_weight = 0;
     
-//     int num_games;
-//     std::cout << "請輸入要進行的遊戲場數: ";
-//     std::cin >> num_games;
-    
-//     GameStats stats;
-//     stats.total_games = num_games;
-    
-//     if (num_games > 1) {
-//         std::cout << "\n開始進行多場遊戲模擬...\n";
-//     }
-    
-//     for(int game_num = 1; game_num <= num_games; game_num++) {
-//         GST game;
-//         MCTS mcts(5000);
-//         ISMCTS ismcts(5000);
-//         bool my_turn = true;
+    for(int pos = 0; pos < ROW * COL; pos++) {
+        int row = pos / COL;
+        int col = pos % COL;
         
-//         // 重置所有遊戲狀態
-//         game.init_board();
-//         mcts.reset();
-//         ismcts.reset();
+        if(is_valid_pattern(pos, offset_1x4)){
+            total_weight += get_weight(pos, offset_1x4, d);
+        }
+        if(is_valid_pattern(pos, offset_4x1)){
+            total_weight += get_weight(pos, offset_4x1, d);
+        }
+        if(is_valid_pattern(pos, offset_2x2)){
+            total_weight += get_weight(pos, offset_2x2, d);
+        }
+    }
+
+    return total_weight / (float)TUPLE_NUM;
+}
+// =============================
+// GST::highest_weight
+// 找出權重最高的移動
+// =============================
+int GST::highest_weight(DATA& d){
+    float WEIGHT[MAX_MOVES] = {0};
+    int root_nmove;
+    int root_moves[MAX_MOVES];
+    root_nmove = gen_all_move(root_moves);
+
+    for(int m = 0; m < root_nmove; m++){
+        int move_index = m;
+        int piece = root_moves[m] >> 4;
+        int direction = root_moves[m] & 0xf;
+        int src = pos[piece];
+        int dst = src + dir_val[direction];  //the position after move
+
+        if(pos[piece] == 0 && direction == 1 && nowTurn == USER && board[0] == BLUE){  // if check_win_move() = true, won't move and return directly
+            WEIGHT[move_index] = 1;
+        }
+        else if(pos[piece] == 5 && direction == 2 && nowTurn == USER && board[5] == BLUE){
+            WEIGHT[move_index] = 1;
+        }
+        else if(pos[piece] == 30 && direction == 1 && nowTurn == ENEMY && board[30] == -BLUE){
+            WEIGHT[move_index] = 1;
+        }
+        else if(pos[piece] == 35 && direction == 2 && nowTurn == ENEMY && board[35] == -BLUE){
+            WEIGHT[move_index] = 1;        
+        }
+        else if(pos[piece] == 4 && direction == 2 && nowTurn == USER && color[piece] == BLUE){      //客製化
+            if(board[5] >= 0 && board[11] >= 0){
+                WEIGHT[move_index] = 1;
+            }
+        }
+        else if(pos[piece] == 1 && direction == 1 && nowTurn == USER && color[piece] == BLUE){      //客製化
+            if(board[0] >= 0 && board[6] >= 0){
+                WEIGHT[move_index] = 1;
+            }
+        }
+        else{
+            int tmp_color[PIECES * 2];      //去除上帝視角
+            for(int i = 0; i < PIECES * 2; i++) tmp_color[i] = color[i];
+            if(nowTurn == USER) for(int i = PIECES; i < PIECES * 2; i++) color[i] = -UNKNOWN;
+            else for(int i = 0; i < PIECES; i++) color[i] = UNKNOWN;
+
+            do_move(root_moves[m]);
+            nowTurn ^= 1;
+
+            WEIGHT[move_index] = compute_board_weight(d);
+
+            nowTurn ^= 1;
+            undo();
+
+            for(int i = 0; i < PIECES * 2; i++) color[i] = tmp_color[i];
+        }
+
+        //調參數時間
+        int row = dst / 6;
+        int col = dst % 6;
         
-//         if(num_games == 1) {
-//             std::cout << "\n===== 遊戲開始 =====\n\n";
-//             game.print_board();
-//         } else {
-//             print_progress_bar(game_num - 1, num_games);
-//         }
+        // 計算目標位置到各角落的距離
+        int d0 = row + col;                     // 到 (0,0) 的距離
+        int d5 = row + (5 - col);               // 到 (0,5) 的距離
+        int d30 = (5 - row) + col;              // 到 (5,0) 的距離
+        int d35 = (5 - row) + (5 - col);        // 到 (5,5) 的距離
         
-//         while(!game.is_over()) {
-//             if(my_turn) {
-//                 if(num_games == 1) std::cout << "Player 1 (MCTS) 思考中...\n";
-//                 int move = mcts.findBestMove(game);
-//                 if (move == -1) break;
-//                 game.do_move(move);
-//             } else {
-//                 if(num_games == 1) std::cout << "Player 2 (ISMCTS) 思考中...\n";
-//                 int move = ismcts.findBestMove(game);
-//                 if (move == -1) break;
-//                 game.do_move(move);
-//             }
+        // 存儲每個棋子到各角落的距離
+        std::vector<std::tuple<int, int, int>> pieces_distances; // (棋子索引, 角落編號, 距離)
             
-//             if(num_games == 1) {
-//                 game.print_board();
-//                 std::cout << "當前回合數: " << game.n_plies << std::endl;
-//             }
+        if(nowTurn == USER){
+            // 計算所有棋子到各角落的距離
+            for(int i = 0; i < PIECES; i++){
+                if(pos[i] != -1){
+                    int p_row = pos[i] / 6;
+                    int p_col = pos[i] % 6;
+                    
+                    // 計算這個棋子到四個角落的距離
+                    int dist_to_0 = p_row + p_col;
+                    int dist_to_5 = p_row + (5 - p_col);
+                    int dist_to_30 = (5 - p_row) + p_col;
+                    int dist_to_35 = (5 - p_row) + (5 - p_col);
+                    
+                    // 添加所有棋子-角落距離組合
+                    pieces_distances.push_back(std::make_tuple(i, 0, dist_to_0));
+                    pieces_distances.push_back(std::make_tuple(i, 1, dist_to_5));
+                    pieces_distances.push_back(std::make_tuple(i, 2, dist_to_30));
+                    pieces_distances.push_back(std::make_tuple(i, 3, dist_to_35));
+                }
+            }
+        }
+        else if(nowTurn == ENEMY){
+            for(int i = PIECES; i < PIECES * 2; i++){
+                if(pos[i] != -1){
+                    int p_row = pos[i] / 6;
+                    int p_col = pos[i] % 6;
+                    
+                    // 計算這個棋子到四個角落的距離
+                    int dist_to_0 = p_row + p_col;
+                    int dist_to_5 = p_row + (5 - p_col);
+                    int dist_to_30 = (5 - p_row) + p_col;
+                    int dist_to_35 = (5 - p_row) + (5 - p_col);
+                    
+                    // 添加所有棋子-角落距離組合
+                    pieces_distances.push_back(std::make_tuple(i, 0, dist_to_0));
+                    pieces_distances.push_back(std::make_tuple(i, 1, dist_to_5));
+                    pieces_distances.push_back(std::make_tuple(i, 2, dist_to_30));
+                    pieces_distances.push_back(std::make_tuple(i, 3, dist_to_35));
+                }
+            }
+        }
             
-//             my_turn = !my_turn;
-//         }
+        // 按距離排序所有棋子-角落組合
+        std::sort(pieces_distances.begin(), pieces_distances.end(), 
+        [](const std::tuple<int, int, int>& a, const std::tuple<int, int, int>& b){
+            return std::get<2>(a) < std::get<2>(b);
+        });
         
-//         // Update statistics
-//         int winner = game.get_winner();
-//         if(winner == -2) {
-//             stats.draws++;
-//         } else if(winner == USER) {
-//             stats.mcts_wins++; // 總勝場+1
-//             if(game.is_escape) {
-//                 stats.mcts_escape++; // 藍子逃脫+1
-//             } else if(game.piece_nums[0] == 0) {
-//                 stats.mcts_enemy_red++; // 我方紅子被吃光+1
-//             } else if(game.piece_nums[3] == 0) {
-//                 stats.mcts_enemy_blue++; // 敵方藍子被吃光+1
-//             }
-//         } else if(winner == ENEMY) {
-//             stats.ismcts_wins++; // 總勝場+1
-//             if(game.is_escape) {
-//                 stats.ismcts_escape++; // 藍子逃脫+1
-//             } else if(game.piece_nums[2] == 0) {
-//                 stats.ismcts_enemy_red++; // 我方紅子被吃光+1
-//             } else if(game.piece_nums[1] == 0) {
-//                 stats.ismcts_enemy_blue++; // 敵方藍子被吃光+1
-//             }
-//         }
+        // 已分配的棋子和角落
+        bool piece_assigned[PIECES * 2];
+        bool corner_assigned[4];
+        int assigned_corner_for_piece[PIECES * 2];
 
-//         // Only show detailed output for single game
-//         if(num_games == 1) {
-//             if(winner == -2) {
-//                 printf("遊戲結束！達到200回合，判定為平局！\n");
-//             } else {
-//                 printf("遊戲結束！%s 獲勝！\n", winner ? "Player 2 (ISMCTS)" : "Player 1 (MCTS)");
-//                 if(game.is_escape) {
-//                     printf("勝利方式：藍色棋子成功逃脫！\n");
-//                 } else if(game.piece_nums[0] == 0) {
-//                     printf("勝利方式：Player 1 的紅色棋子全部被吃光！\n");
-//                 } else if(game.piece_nums[2] == 0) {
-//                     printf("勝利方式：Player 2 的紅色棋子全部被吃光！\n");
-//                 } else if(game.piece_nums[1] == 0) {
-//                     printf("勝利方式：Player 1 的藍色棋子全部被吃光！\n");
-//                 } else if(game.piece_nums[3] == 0) {
-//                     printf("勝利方式：Player 2 的藍色棋子全部被吃光！\n");
-//                 }
-//             }
-//         }
-//     }
+        memset(piece_assigned, false, sizeof(piece_assigned));
+        memset(corner_assigned, false, sizeof(corner_assigned));
+        memset(assigned_corner_for_piece, -1, sizeof(assigned_corner_for_piece));
+        
+        // 按距離分配棋子到角落
+        for(const auto& tuple : pieces_distances) {
+            int p_idx = std::get<0>(tuple);
+            int corner = std::get<1>(tuple);
+            
+            // 如果這個棋子和角落都還沒被分配，則進行分配
+            if(!piece_assigned[p_idx] && !corner_assigned[corner]) {
+                piece_assigned[p_idx] = true;
+                corner_assigned[corner] = true;
+                assigned_corner_for_piece[p_idx] = corner;
+            }
+            
+            // 如果所有角落都已分配，停止循環
+            if(corner_assigned[0] && corner_assigned[1] && corner_assigned[2] && corner_assigned[3]) {
+                break;
+            }
+        }
+        
+        // 角落獎勵係數
+        float corner_bonus = 1.0;
+        
+        // 檢查當前棋子是否被分配到某個角落
+        if(assigned_corner_for_piece[piece] != -1) {
+            int assigned_corner = assigned_corner_for_piece[piece];
+            int current_dist;
+
+            // 計算當前位置到分配角落的距離
+            int p_row = src / 6;
+            int p_col = src % 6;
+            
+            if(assigned_corner == 0) {
+                current_dist = p_row + p_col;
+                // 檢查移動是否更接近分配的角落
+                if(d0 < current_dist) {
+                    corner_bonus = 1.01;
+                }
+            } else if(assigned_corner == 1) {
+                current_dist = p_row + (5 - p_col);
+                if(d5 < current_dist) {
+                    corner_bonus = 1.01;
+                }
+            } else if(assigned_corner == 2) {
+                current_dist = (5 - p_row) + p_col;
+                if(d30 < current_dist) {
+                    corner_bonus = 1.01;
+                }
+            } else if(assigned_corner == 3) {
+                current_dist = (5 - p_row) + (5 - p_col);
+                if(d35 < current_dist) {
+                    corner_bonus = 1.01;
+                }
+            }
+        }
+
+        WEIGHT[move_index] *= corner_bonus;
+
+        if(piece_nums[2] <= 1 && board[dst] == 0){
+            WEIGHT[move_index] *= 1.01;
+        }
+
+        //printf("Move = %d | piece: %c, direction: %d, WEIGHT[]: %f\n\n", move_index, print_piece[piece], direction, WEIGHT[move_index]);
+    }
+
+    float max_weight = -1;
+    int do_idx = -1, same_idx = 0, SAME[MAX_MOVES] = {0};
+
+    // 找到最大權重的走步
+    for(int i = 0; i < root_nmove; i++){
+        if(WEIGHT[i] == max_weight){
+            SAME[same_idx++] = i;
+        }
+        else if(WEIGHT[i] > max_weight){
+            max_weight = WEIGHT[i];
+            do_idx = i;
+            SAME[0] = i;
+            same_idx = 1;
+        }
+    }
+
+    auto now = std::chrono::system_clock::now();
+    auto now_as_duration = now.time_since_epoch();
+    auto now_as_microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now_as_duration).count();
+    pcg32 rng(now_as_microseconds);
+    if(same_idx > 1){
+        int x = rng(same_idx - 1);
+        do_idx = SAME[x];
+    }
+
+    return root_moves[do_idx];
+}
+DATA data;
+
+int main() {
+    std::random_device rd;
+    std::mt19937 gen(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<> dist(0, 7);
     
-//     // Complete the progress bar and print final stats
-//     if(num_games > 1) {
-//         print_progress_bar(num_games, num_games);
-//         std::cout << "\n\n";
-//         print_game_stats(stats);
-//     }
+    int num_games;
+    std::cout << "請輸入要進行的遊戲場數: ";
+    std::cin >> num_games;
     
-//     return 0;
-// }
+    data.init_data();
+    data.read_data_file(500000);
+    GameStats stats;
+    stats.total_games = num_games;
+    
+    if (num_games > 1) {
+        std::cout << "\n開始進行多場遊戲模擬...\n";
+    }
+    
+    for(int game_num = 1; game_num <= num_games; game_num++) {
+        GST game;
+        MCTS mcts(5000);
+        ISMCTS ismcts(5000);
+        bool my_turn = true;
+        
+        // 重置所有遊戲狀態
+        game.init_board();
+        mcts.reset();
+        ismcts.reset();
+        
+        if(num_games == 1) {
+            std::cout << "\n===== 遊戲開始 =====\n\n";
+            game.print_board();
+        } else {
+            print_progress_bar(game_num - 1, num_games);
+        }
+        
+        while(!game.is_over()) {
+            if(my_turn) {
+                if(num_games == 1) std::cout << "Player 1 (MCTS) 思考中...\n";
+                int move = mcts.findBestMove(game);
+                if (move == -1) break;
+                game.do_move(move);
+            } else {
+                if(num_games == 1) std::cout << "Player 2 (ISMCTS) 思考中...\n";
+                int move = ismcts.findBestMove(game,data);
+                if (move == -1) break;
+                game.do_move(move);
+            }
+            
+            if(num_games == 1) {
+                game.print_board();
+                std::cout << "當前回合數: " << game.n_plies << std::endl;
+            }
+            
+            my_turn = !my_turn;
+        }
+        
+        // Update statistics
+        int winner = game.get_winner();
+        if(winner == -2) {
+            stats.draws++;
+        } else if(winner == USER) {
+            stats.mcts_wins++; // 總勝場+1
+            if(game.is_escape) {
+                stats.mcts_escape++; // 藍子逃脫+1
+            } else if(game.piece_nums[0] == 0) {
+                stats.mcts_enemy_red++; // 我方紅子被吃光+1
+            } else if(game.piece_nums[3] == 0) {
+                stats.mcts_enemy_blue++; // 敵方藍子被吃光+1
+            }
+        } else if(winner == ENEMY) {
+            stats.ismcts_wins++; // 總勝場+1
+            if(game.is_escape) {
+                stats.ismcts_escape++; // 藍子逃脫+1
+            } else if(game.piece_nums[2] == 0) {
+                stats.ismcts_enemy_red++; // 我方紅子被吃光+1
+            } else if(game.piece_nums[1] == 0) {
+                stats.ismcts_enemy_blue++; // 敵方藍子被吃光+1
+            }
+        }
+
+        // Only show detailed output for single game
+        if(num_games == 1) {
+            if(winner == -2) {
+                printf("遊戲結束！達到200回合，判定為平局！\n");
+            } else {
+                printf("遊戲結束！%s 獲勝！\n", winner ? "Player 2 (ISMCTS)" : "Player 1 (MCTS)");
+                if(game.is_escape) {
+                    printf("勝利方式：藍色棋子成功逃脫！\n");
+                } else if(game.piece_nums[0] == 0) {
+                    printf("勝利方式：Player 1 的紅色棋子全部被吃光！\n");
+                } else if(game.piece_nums[2] == 0) {
+                    printf("勝利方式：Player 2 的紅色棋子全部被吃光！\n");
+                } else if(game.piece_nums[1] == 0) {
+                    printf("勝利方式：Player 1 的藍色棋子全部被吃光！\n");
+                } else if(game.piece_nums[3] == 0) {
+                    printf("勝利方式：Player 2 的藍色棋子全部被吃光！\n");
+                }
+            }
+        }
+    }
+    
+    // Complete the progress bar and print final stats
+    if(num_games > 1) {
+        print_progress_bar(num_games, num_games);
+        std::cout << "\n\n";
+        print_game_stats(stats);
+    }
+    
+    return 0;
+}

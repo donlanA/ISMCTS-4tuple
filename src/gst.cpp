@@ -3,6 +3,15 @@
 #include "gst.hpp"
 #include "ismcts.hpp"
 #include "mcts.hpp" 
+#include <random>
+
+// Random number generator function
+inline int rng(int n) {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, n-1);
+    return dist(gen);
+}
 
 // =============================
 // 靜態變數：棋子、方向、初始位置、pattern offset
@@ -27,115 +36,110 @@ static const int offset_4x1[4] = {0, 6, 12, 18};  // 縱向 4x1 pattern
 // 初始化棋盤、隨機分配紅棋
 // =============================
 void GST::init_board(){
-    // /*
-    //     A  B  C  D  E  F  G  H  a  b  c  d  e  f  g  h
-    //     0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15  <-piece index, used in pos and color
-    //    25 26 27 28 31 32 33 34 10  9  8  7  4  3  2  1  <-position on board
-    // */
+    /*
+        A  B  C  D  E  F  G  H  a  b  c  d  e  f  g  h
+        0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15  <-piece index, used in pos and color
+       25 26 27 28 31 32 33 34 10  9  8  7  4  3  2  1  <-position on board
+    */
 
-    // memset(board, 0, sizeof(board));
-    // memset(pos, 0, sizeof(pos));
-    // memset(revealed, false, sizeof(revealed));
-    // for(int i=0; i<ROW*COL; i++) piece_board[i] = -1;
-    // for(int i=0; i<4; i++) piece_nums[i] = 4;
-    // for(int i=0; i<PIECES; i++) {   //set color
-    //     color[i] = BLUE;
-    //     color[i+8] = -BLUE;
-    // }
-    // nowTurn = USER;
-    // winner = -1;
-    // n_plies = 0;
+    memset(board, 0, sizeof(board));
+    memset(pos, 0, sizeof(pos));
+    memset(revealed, false, sizeof(revealed));
+    for(int i=0; i<ROW*COL; i++) piece_board[i] = -1;
+    for(int i=0; i<4; i++) piece_nums[i] = 4;
+    for(int i=0; i<PIECES; i++) {   //set color
+        color[i] = BLUE;
+        color[i+8] = -BLUE;
+    }
+    nowTurn = USER;
+    winner = -1;
+    n_plies = 0;
+    is_escape = false;
 
-    // // random set red pieces
-    // int red_num = 0;        // 現在有幾個紅棋
-    // bool red_or_not[8];     // 哪個位置已經是紅棋了
-    // std::fill(std::begin(red_or_not), std::end(red_or_not), false);
-    // char red[4];
-    // char red2[4];
+    // random set red pieces
+    int red_num = 0;        // 現在有幾個紅棋
+    bool red_or_not[8];     // 哪個位置已經是紅棋了
+    std::fill(std::begin(red_or_not), std::end(red_or_not), false);
+    char red[4];
+    char red2[4];
 
-    // while(red_num != 4){
-    //     int x = rng(8);
-    //     if(!red_or_not[x]){
-    //         red[red_num] = print_piece[x];
-    //         red_or_not[x] = true;
-    //         red_num += 1;
-    //     }
-    // }
+    while(red_num != 4){
+        int x = rng(8);
+        if(!red_or_not[x]){
+            red[red_num] = print_piece[x];
+            red_or_not[x] = true;
+            red_num += 1;
+        }
+    }
 
-    // red_num = 0;
-    // std::fill(std::begin(red_or_not), std::end(red_or_not), false);
-    // while(red_num != 4){
-    //     int x = rng(8);
-    //     if(!red_or_not[x]){
-    //         red2[red_num] = print_piece[x+8];
-    //         red_or_not[x] = true;
-    //         red_num += 1;
-    //     }
-    // }
+    red_num = 0;
+    std::fill(std::begin(red_or_not), std::end(red_or_not), false);
+    while(red_num != 4){
+        int x = rng(8);
+        if(!red_or_not[x]){
+            red2[red_num] = print_piece[x+8];
+            red_or_not[x] = true;
+            red_num += 1;
+        }
+    }
     
-    // for(int i=0; i<4; i++){
-    //     color[piece_index[red[i]]] = RED;
-    //     color[piece_index[red2[i]]] = -RED;
+    for(int i=0; i<4; i++){
+        color[piece_index[red[i]]] = RED;
+        color[piece_index[red2[i]]] = -RED;
         
-    //     if (piece_index[red2[i]] >= PIECES) {
-    //         revealed[piece_index[red2[i]]] = true;
-    //     }
-    // }
-    // for(int i=PIECES; i<PIECES*2; i++) {
-    //     if(color[i] == -BLUE) {
-    //         revealed[i] = true;
-    //     }
-    // }
+        if (piece_index[red2[i]] >= PIECES) {
+            revealed[piece_index[red2[i]]] = true;
+        }
+    }
+    for(int i=PIECES; i<PIECES*2; i++) {
+        if(color[i] == -BLUE) {
+            revealed[i] = true;
+        }
+    }
 
-    // //set all pieces position and board
-    // int offset = 0;
-    // for(int player=0; player<2; player++){
-    //     for(int i=0; i<PIECES; i++){
-    //         board[init_pos[player][i]] = color[i+offset];   //board: record the color in this location(0~3)
-    //         piece_board[init_pos[player][i]] = i + offset;  //piece_booard: write chess number in board, chess number(0~15)/ space(-1)
-    //         pos[i+offset] = init_pos[player][i];    //pos: record the chess index(0~15)
-    //     }
-    //     offset+=8;
-    // }
+    //set all pieces position and board
+    int offset = 0;
+    for(int player=0; player<2; player++){
+        for(int i=0; i<PIECES; i++){
+            board[init_pos[player][i]] = color[i+offset];   //board: record the color in this location(0~3)
+            piece_board[init_pos[player][i]] = i + offset;  //piece_booard: write chess number in board, chess number(0~15)/ space(-1)
+            pos[i+offset] = init_pos[player][i];    //pos: record the chess index(0~15)
+        }
+        offset+=8;
+    }
 
-    // return;
+    return;
 }
 
 // =============================
 // GST::print_board
 // 印出棋盤、剩餘棋子、被吃棋子
 // =============================
-void GST::print_board(){    //print the board now & print User's remain chess & print eaten Enemy's chess
-//     printf("step = %d\n", step - 1);
-//     for (int i = 0; i < ROW * COL; i++) {
-//         if(piece_board[i] != -1){
-//             if(abs(color[piece_board[i]]) == RED) SetColor(4);
-//             else if(abs(color[piece_board[i]]) == BLUE) SetColor(9);
-//             printf("%4c", print_piece[piece_board[i]]);
-//             SetColor();
-//         }
-//         else if(i == 0 || i == 30) printf("%4c", '<');
-//         else if(i == 5 || i == 35) printf("%4c", '>');
-//         else printf("%4c", '-');           
-//         if(i % 6 == 5) printf("\n");
-//     }
-//     printf("\n");
-//     printf("User remaining ghosts: ");
-//     for(int i=0; i<PIECES; i++){
-//         if(pos[i] != -1) printf("%c: %s ", print_piece[i], color[i]==RED ? "red":"blue");
-//     }
-//     printf("\n");
-//     printf("Eaten enemy ghosts: ");
-//     for(int i=8; i<PIECES*2; i++){
-//         if(pos[i] == -1) printf("%c: %s ", print_piece[i], color[i]==-RED ? "red":"blue");
-//     }
-//     printf("\n");
-
-//     // for(int i = 0; i < 36; i++){
-//     //     printf("%d ", board[i]);
-//     //     if(i % 6 == 5) printf("\n");
-//     // }
-//     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+void GST::print_board(){
+    for (int i = 0; i < ROW; i++) {
+        for (int j = 0; j < COL; j++) {
+            if(piece_board[i * ROW + j] != -1) 
+                printf("%4c", print_piece[piece_board[i * ROW + j]]);
+            else if(i == 0 && j == 0) 
+                printf("%4c", '<');
+            else if(i == 0 && j == COL-1) 
+                printf("%4c", '>');
+            else 
+                printf("%4c", '-');
+        }
+        printf("\n");
+    }
+    printf("\n");
+    printf("User remaining ghosts: ");
+    for(int i=0; i<PIECES; i++){
+        if(pos[i] != -1) printf("%c: %s ", print_piece[i], color[i]==RED ? "red":"blue");
+    }
+    printf("\n");
+    printf("Eaten enemy ghosts: ");
+    for(int i=8; i<PIECES*2; i++){
+        if(pos[i] == -1) printf("%c: %s ", print_piece[i], color[i]==-RED ? "red":"blue");
+    }
+    printf("\n");
 }
 
 // =============================
@@ -388,16 +392,16 @@ bool GST::is_over(){    //game end or not => the number of remain chess color
 //新增統計結構
 struct GameStats {
     int total_games;
-    // MCTS (Player 1) 統計
-    int mcts_wins;
-    int mcts_escape;
-    int mcts_enemy_red;
-    int mcts_enemy_blue;
-    // ISMCTS (Player 2) 統計
+    // ISMCTS (Player 1) 統計
     int ismcts_wins;
     int ismcts_escape;
     int ismcts_enemy_red;
     int ismcts_enemy_blue;
+    // MCTS (Player 2) 統計
+    int mcts_wins;
+    int mcts_escape;
+    int mcts_enemy_red;
+    int mcts_enemy_blue;
     // 平局
     int draws;
 
@@ -409,15 +413,15 @@ void print_game_stats(const GameStats& stats) {
     std::cout << "\n===== 統計結果 =====\n";
     std::cout << "總場次: " << stats.total_games << "\n\n";
     
-    std::cout << "MCTS 獲勝: " << stats.mcts_wins << " 場\n";
-    std::cout << "  - 藍子逃脫: " << stats.mcts_escape << " 場\n";
-    std::cout << "  - 紅子被吃光: " << stats.mcts_enemy_red << " 場\n";
-    std::cout << "  - 吃光對手藍子: " << stats.mcts_enemy_blue << " 場\n\n";
-    
     std::cout << "ISMCTS 獲勝: " << stats.ismcts_wins << " 場\n";
     std::cout << "  - 藍子逃脫: " << stats.ismcts_escape << " 場\n";
     std::cout << "  - 紅子被吃光: " << stats.ismcts_enemy_red << " 場\n";
     std::cout << "  - 吃光對手藍子: " << stats.ismcts_enemy_blue << " 場\n\n";
+
+    std::cout << "MCTS 獲勝: " << stats.mcts_wins << " 場\n";
+    std::cout << "  - 藍子逃脫: " << stats.mcts_escape << " 場\n";
+    std::cout << "  - 紅子被吃光: " << stats.mcts_enemy_red << " 場\n";
+    std::cout << "  - 吃光對手藍子: " << stats.mcts_enemy_blue << " 場\n\n";
     
     std::cout << "平局: " << stats.draws << " 場\n";
 }
@@ -795,13 +799,13 @@ int main() {
         
         while(!game.is_over()) {
             if(my_turn) {
-                if(num_games == 1) std::cout << "Player 1 (MCTS) 思考中...\n";
-                int move = mcts.findBestMove(game);
+                if(num_games == 1) std::cout << "Player 1 (ISMCTS) 思考中...\n";
+                int move = ismcts.findBestMove(game,data);
                 if (move == -1) break;
                 game.do_move(move);
             } else {
-                if(num_games == 1) std::cout << "Player 2 (ISMCTS) 思考中...\n";
-                int move = ismcts.findBestMove(game,data);
+                if(num_games == 1) std::cout << "Player 2 (MCTS) 思考中...\n";
+                int move = mcts.findBestMove(game);
                 if (move == -1) break;
                 game.do_move(move);
             }
@@ -819,22 +823,22 @@ int main() {
         if(winner == -2) {
             stats.draws++;
         } else if(winner == USER) {
-            stats.mcts_wins++; // 總勝場+1
-            if(game.is_escape) {
-                stats.mcts_escape++; // 藍子逃脫+1
-            } else if(game.piece_nums[0] == 0) {
-                stats.mcts_enemy_red++; // 我方紅子被吃光+1
-            } else if(game.piece_nums[3] == 0) {
-                stats.mcts_enemy_blue++; // 敵方藍子被吃光+1
-            }
-        } else if(winner == ENEMY) {
             stats.ismcts_wins++; // 總勝場+1
             if(game.is_escape) {
                 stats.ismcts_escape++; // 藍子逃脫+1
-            } else if(game.piece_nums[2] == 0) {
+            } else if(game.piece_nums[0] == 0) {
                 stats.ismcts_enemy_red++; // 我方紅子被吃光+1
-            } else if(game.piece_nums[1] == 0) {
+            } else if(game.piece_nums[3] == 0) {
                 stats.ismcts_enemy_blue++; // 敵方藍子被吃光+1
+            }
+        } else if(winner == ENEMY) {
+            stats.mcts_wins++; // 總勝場+1
+            if(game.is_escape) {
+                stats.mcts_escape++; // 藍子逃脫+1
+            } else if(game.piece_nums[2] == 0) {
+                stats.mcts_enemy_red++; // 我方紅子被吃光+1
+            } else if(game.piece_nums[1] == 0) {
+                stats.mcts_enemy_blue++; // 敵方藍子被吃光+1
             }
         }
 
@@ -843,7 +847,7 @@ int main() {
             if(winner == -2) {
                 printf("遊戲結束！達到200回合，判定為平局！\n");
             } else {
-                printf("遊戲結束！%s 獲勝！\n", winner ? "Player 2 (ISMCTS)" : "Player 1 (MCTS)");
+                printf("遊戲結束！%s 獲勝！\n", winner ? "Player 2 (MCTS)" : "Player 1 (ISMCTS)");
                 if(game.is_escape) {
                     printf("勝利方式：藍色棋子成功逃脫！\n");
                 } else if(game.piece_nums[0] == 0) {

@@ -47,6 +47,13 @@ public:
     bool is_over();              // 判斷遊戲是否結束
     bool is_revealed(int piece) const { return revealed[piece]; } // 查詢棋子是否已揭示
     
+    bool is_valid_pattern(int base_pos, const int* offset); // 檢查4-tuple pattern是否合法
+    int get_loc(int base_pos, const int* offset);           // 取得4-tuple pattern的位置編碼
+    int get_feature_unknown(int base_pos, const int* offset); // 取得4-tuple pattern的特徵編碼
+    float get_weight(int base_pos, const int* offset, DATA&); // 取得4-tuple pattern的權重
+    float compute_board_weight(DATA&);                      // 計算整個棋盤的平均權重
+    int highest_weight(DATA&);           
+                       // 取得權重最高的合法移動
     int get_color(int piece) const { return color[piece]; }       // 取得棋子顏色
     int get_pos(int piece) const { return pos[piece]; }           // 取得棋子位置
     void set_color(int piece, int new_color) { color[piece] = new_color; } // 設定棋子顏色
